@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 中華職棒 精確賽程表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #cbd5e1;
+        }
+        .calendar-day {
+            background-color: white;
+            min-height: 120px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+        }
+        .holiday-bg {
+            background-color: #fff1f2;
+        }
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            background-color: #334155;
+            color: white;
+            padding: 8px 0;
+        }
+        
+        .holiday-label {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.65rem;
+            color: #dc2626;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 1px 5px;
+            border-radius: 4px;
+            border: 1px solid #fecaca;
+            z-index: 10;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        /* Pills Filter Styles */
+        .team-filter-btn {
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+        }
+        .team-filter-btn:active {
+            transform: scale(0.95);
+        }
+        .team-filter-btn.inactive {
+            background-color: white !important;
+            border-color: #e2e8f0 !important;
+            color: #94a3b8 !important;
+            box-shadow: none !important;
+        }
+        .team-filter-btn.inactive:hover {
+            border-color: #cbd5e1 !important;
+            color: #64748b !important;
+        }
+        .team-filter-btn.active {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .team-filter-btn .check-icon {
+            transition: opacity 0.2s, width 0.2s;
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .team-filter-btn.active .check-icon {
+            width: 14px;
+            opacity: 1;
+        }
+
+        /* 主客場視覺改善 */
+        .match-badge {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            margin-bottom: 3px;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            cursor: default;
+            line-height: 1.5;
+            transition: all 0.2s;
+            gap: 2px;
+            padding: 2px;
+            background-color: #f8fafc;
+        }
+        .match-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .match-team {
+            flex: 1;
+            padding: 3px 4px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: 3px;
+        }
+        .match-team.home {
+            font-weight: 900;
+            border: 2px solid rgba(0,0,0,0.3);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .match-team.away {
+            font-weight: 600;
+            opacity: 0.5;
+            filter: brightness(1.4) saturate(0.7);
+        }
+        .match-vs {
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+        
+        /* Toggle Switch */
+        .mode-toggle {
+            display: flex;
+            background-color: #f1f5f9;
+            padding: 4px;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .mode-option {
+            padding: 6px 16px;
+            border-radius: 9999px;
+            z-index: 10;
+            font-size: 0.875rem;
+            font-weight: bold;
+            color: #64748b;
+            transition: color 0.3s;
+        }
+        .mode-option.selected {
+            color: #0f172a;
+        }
+        .mode-slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background-color: white;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .mode-toggle[data-state="all"] .mode-slider {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto px-2 py-6 max-w-7xl">
+        <h1 class="text-3xl font-bold text-center mb-2 text-slate-800">2026 中華職棒 例行賽賽程表</h1>
+        
+        <!-- Controls Section -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">
+            <div class="flex flex-col gap-6">
+                <!-- Display Mode Toggle -->
+                <div class="flex justify-center">
+                    <div class="mode-toggle" id="display-mode-toggle" data-state="home">
+                        <div class="mode-slider"></div>
+                        <div class="mode-option selected" data-value="home">僅顯示主場</div>
+                        <div class="mode-option" data-value="all">顯示主場+客場</div>
+                    </div>
+                </div>
+
+                <!-- Team Filters -->
+                <div class="border-t border-slate-100 pt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-bold text-slate-700 flex items-center gap-2">
+                            <i class="fas fa-filter text-slate-400"></i> 球隊篩選
+                        </span>
+                        <div class="flex gap-2">
+                            <button id="btn-select-all" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-md transition-colors font-medium">全選</button>
+                            <button id="btn-deselect-all" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-md transition-colors font-medium">全取消</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 justify-center" id="team-filters">
+                        <!-- Pills injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Statistics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Game Counts -->
+            <div class="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-400 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="text-slate-500 text-sm font-medium">平日 (週一~四)</div>
+                        <div class="text-3xl font-bold text-slate-800 mt-1" id="stat-weekday">0</div>
+                        <div class="text-xs text-slate-400">場</div>
+                    </div>
+                    <i class="fas fa-briefcase absolute -right-2 -bottom-2 text-6xl text-slate-50 opacity-50 transform rotate-12"></i>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-teal-500 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="text-slate-500 text-sm font-medium">週五之夜</div>
+                        <div class="text-3xl font-bold text-teal-600 mt-1" id="stat-friday">0</div>
+                        <div class="text-xs text-slate-400">場</div>
+                    </div>
+                    <i class="fas fa-glass-cheers absolute -right-2 -bottom-2 text-6xl text-teal-50 opacity-50 transform rotate-12"></i>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-rose-500 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="text-slate-500 text-sm font-medium">週末/假日</div>
+                        <div class="text-3xl font-bold text-rose-600 mt-1" id="stat-weekend">0</div>
+                        <div class="text-xs text-slate-400">場</div>
+                    </div>
+                    <i class="fas fa-star absolute -right-2 -bottom-2 text-6xl text-rose-50 opacity-50 transform rotate-12"></i>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl shadow-sm text-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="text-slate-300 text-sm font-medium">總計顯示場次</div>
+                        <div class="text-3xl font-bold text-white mt-1" id="stat-total">0</div>
+                        <div class="text-xs text-slate-400" id="stat-total-desc">場主場賽事</div>
+                    </div>
+                    <i class="fas fa-chart-pie absolute -right-2 -bottom-2 text-6xl text-slate-700 opacity-50 transform rotate-12"></i>
+                </div>
+            </div>
+
+            <!-- Conflict Stats -->
+            <div class="bg-yellow-50 p-4 rounded-xl shadow-sm border border-yellow-200 flex flex-col justify-center relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-yellow-800 font-bold text-sm">主場撞期天數</span>
+                    </div>
+                    <div class="text-4xl font-bold text-yellow-700" id="stat-conflict">0</div>
+                    <div class="text-xs text-yellow-600 mt-2 font-medium">
+                        所選隊伍同日皆有主場
+                    </div>
+                </div>
+                <i class="fas fa-exclamation-triangle absolute -right-4 -bottom-4 text-8xl text-yellow-100 opacity-70 transform rotate-12"></i>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="text-center text-xs text-slate-400 mb-6 flex items-center justify-center gap-2">
+            <i class="fas fa-info-circle"></i> 數據來源：CPBL 2026年例行賽日程表 (2025/12/04 公布版本)
+        </div>
+
+        <!-- Calendar Container -->
+        <div id="calendars-container" class="space-y-8">
+            <!-- Calendars injected here -->
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration (Names Restored) ---
+        const teamsConfig = {
+            'dragon':   { name: '味全', color: '#d0021b', short: '味全', textColor: 'white', logo: '🐉' },
+            'monkey':   { name: '樂天', color: '#8b0000', short: '樂天', textColor: 'white', logo: '🐵' }, 
+            'brothers': { name: '兄弟', color: '#fbbf24', short: '兄弟', textColor: 'black', logo: '🐘' }, 
+            'lions':    { name: '統一',   color: '#f97316', short: '統一', textColor: 'white', logo: '🦁' }, 
+            'guardians':{ name: '富邦', color: '#004a9c', short: '富邦', textColor: 'white', logo: '🛡️' }, 
+            'hawks':    { name: '台鋼', color: '#065f46', short: '台鋼', textColor: 'white', logo: '🦅' } 
+        };
+
+        const teamKeys = Object.keys(teamsConfig);
+        let selectedTeams = new Set(teamKeys); // Default select all
+        let displayMode = 'home'; // 'home' or 'all'
+
+        // --- FULLY CORRECTED 360-GAME SCHEDULE DATA ---
+        // V9 Data with previous corrections applied
+        const scheduleData = [
+            { date: '2026-03-28', home: 'monkey', away: 'brothers' },
+            { date: '2026-03-29', home: 'monkey', away: 'dragon' },
+            { date: '2026-03-29', home: 'brothers', away: 'guardians' },
+            { date: '2026-03-29', home: 'lions', away: 'hawks' },
+            // 3/30 Removed
+            { date: '2026-03-31', home: 'brothers', away: 'dragon' },
+            { date: '2026-03-31', home: 'monkey', away: 'hawks' },
+            { date: '2026-03-31', home: 'lions', away: 'guardians' },
+            
+            // 4/1 Swapped
+            { date: '2026-04-01', home: 'brothers', away: 'dragon' },
+            { date: '2026-04-01', home: 'monkey', away: 'hawks' },
+            { date: '2026-04-01', home: 'lions', away: 'guardians' },
+            
+            { date: '2026-04-03', home: 'brothers', away: 'lions' },
+            { date: '2026-04-03', home: 'guardians', away: 'monkey' },
+            { date: '2026-04-03', home: 'dragon', away: 'hawks' },
+            { date: '2026-04-04', home: 'brothers', away: 'lions' },
+            { date: '2026-04-04', home: 'guardians', away: 'monkey' },
+            { date: '2026-04-04', home: 'dragon', away: 'hawks' },
+            { date: '2026-04-05', home: 'brothers', away: 'lions' },
+            { date: '2026-04-05', home: 'guardians', away: 'monkey' },
+            { date: '2026-04-05', home: 'dragon', away: 'hawks' },
+            { date: '2026-04-06', home: 'hawks', away: 'lions' },
+            { date: '2026-04-06', home: 'dragon', away: 'monkey' },
+            { date: '2026-04-06', home: 'guardians', away: 'brothers' },
+            { date: '2026-04-07', home: 'hawks', away: 'lions' },
+            { date: '2026-04-07', home: 'dragon', away: 'monkey' },
+            { date: '2026-04-07', home: 'guardians', away: 'brothers' },
+            // 4/8 Removed
+            { date: '2026-04-10', home: 'hawks', away: 'guardians' },
+            { date: '2026-04-10', home: 'lions', away: 'dragon' },
+            { date: '2026-04-10', home: 'monkey', away: 'brothers' },
+            { date: '2026-04-11', home: 'hawks', away: 'guardians' },
+            { date: '2026-04-11', home: 'lions', away: 'dragon' },
+            { date: '2026-04-11', home: 'monkey', away: 'brothers' },
+            { date: '2026-04-12', home: 'hawks', away: 'guardians' },
+            { date: '2026-04-12', home: 'lions', away: 'dragon' },
+            { date: '2026-04-12', home: 'monkey', away: 'brothers' },
+            { date: '2026-04-14', home: 'guardians', away: 'dragon' },
+            { date: '2026-04-14', home: 'brothers', away: 'hawks' },
+            { date: '2026-04-15', home: 'guardians', away: 'dragon' },
+            { date: '2026-04-15', home: 'brothers', away: 'hawks' },
+            { date: '2026-04-15', home: 'monkey', away: 'lions' },
+            { date: '2026-04-16', home: 'monkey', away: 'lions' },
+            { date: '2026-04-17', home: 'guardians', away: 'lions' },
+            { date: '2026-04-17', home: 'dragon', away: 'brothers' },
+            { date: '2026-04-17', home: 'hawks', away: 'monkey' },
+            { date: '2026-04-18', home: 'guardians', away: 'lions' },
+            { date: '2026-04-18', home: 'dragon', away: 'brothers' },
+            { date: '2026-04-18', home: 'hawks', away: 'monkey' },
+            { date: '2026-04-19', home: 'guardians', away: 'lions' },
+            { date: '2026-04-19', home: 'dragon', away: 'brothers' },
+            { date: '2026-04-19', home: 'hawks', away: 'monkey' },
+            { date: '2026-04-21', home: 'lions', away: 'brothers' },
+            { date: '2026-04-21', home: 'monkey', away: 'guardians' },
+            { date: '2026-04-22', home: 'lions', away: 'brothers' },
+            { date: '2026-04-22', home: 'monkey', away: 'guardians' },
+            { date: '2026-04-22', home: 'hawks', away: 'dragon' },
+            { date: '2026-04-23', home: 'hawks', away: 'dragon' },
+            { date: '2026-04-24', home: 'lions', away: 'hawks' },
+            { date: '2026-04-24', home: 'brothers', away: 'guardians' },
+            { date: '2026-04-24', home: 'monkey', away: 'dragon' },
+            { date: '2026-04-25', home: 'lions', away: 'hawks' },
+            { date: '2026-04-25', home: 'brothers', away: 'guardians' },
+            { date: '2026-04-25', home: 'monkey', away: 'dragon' },
+            { date: '2026-04-26', home: 'lions', away: 'hawks' },
+            { date: '2026-04-26', home: 'brothers', away: 'guardians' },
+            { date: '2026-04-26', home: 'monkey', away: 'dragon' },
+            { date: '2026-04-28', home: 'dragon', away: 'lions' },
+            { date: '2026-04-28', home: 'guardians', away: 'hawks' },
+            { date: '2026-04-29', home: 'dragon', away: 'lions' },
+            { date: '2026-04-29', home: 'guardians', away: 'hawks' },
+            { date: '2026-04-29', home: 'brothers', away: 'monkey' },
+            { date: '2026-04-30', home: 'brothers', away: 'monkey' },
+
+            // === MAY ===
+            { date: '2026-05-01', home: 'dragon', away: 'guardians' },
+            { date: '2026-05-01', home: 'lions', away: 'monkey' },
+            { date: '2026-05-01', home: 'hawks', away: 'brothers' },
+            { date: '2026-05-02', home: 'dragon', away: 'guardians' },
+            { date: '2026-05-02', home: 'lions', away: 'monkey' },
+            { date: '2026-05-02', home: 'hawks', away: 'brothers' },
+            { date: '2026-05-03', home: 'dragon', away: 'guardians' },
+            { date: '2026-05-03', home: 'lions', away: 'monkey' },
+            { date: '2026-05-03', home: 'hawks', away: 'brothers' },
+            { date: '2026-05-05', home: 'guardians', away: 'monkey' },
+            { date: '2026-05-05', home: 'dragon', away: 'brothers' },
+            { date: '2026-05-06', home: 'guardians', away: 'monkey' },
+            { date: '2026-05-06', home: 'dragon', away: 'brothers' },
+            { date: '2026-05-06', home: 'lions', away: 'hawks' },
+            // 5/7 Removed
+            { date: '2026-05-08', home: 'guardians', away: 'dragon' },
+            { date: '2026-05-08', home: 'monkey', away: 'lions' },
+            { date: '2026-05-08', home: 'brothers', away: 'hawks' },
+            { date: '2026-05-09', home: 'guardians', away: 'dragon' },
+            { date: '2026-05-09', home: 'monkey', away: 'lions' },
+            { date: '2026-05-09', home: 'brothers', away: 'hawks' },
+            { date: '2026-05-10', home: 'guardians', away: 'dragon' },
+            { date: '2026-05-10', home: 'monkey', away: 'lions' },
+            { date: '2026-05-10', home: 'brothers', away: 'hawks' },
+            { date: '2026-05-12', home: 'lions', away: 'dragon' },
+            { date: '2026-05-13', home: 'lions', away: 'dragon' },
+            { date: '2026-05-13', home: 'brothers', away: 'guardians' },
+            { date: '2026-05-13', home: 'hawks', away: 'monkey' },
+            { date: '2026-05-14', home: 'hawks', away: 'monkey' },
+            { date: '2026-05-15', home: 'lions', away: 'brothers' },
+            { date: '2026-05-15', home: 'dragon', away: 'monkey' },
+            { date: '2026-05-15', home: 'guardians', away: 'hawks' },
+            { date: '2026-05-16', home: 'lions', away: 'brothers' },
+            { date: '2026-05-16', home: 'dragon', away: 'monkey' },
+            { date: '2026-05-16', home: 'guardians', away: 'hawks' },
+            { date: '2026-05-17', home: 'lions', away: 'brothers' },
+            { date: '2026-05-17', home: 'dragon', away: 'monkey' },
+            { date: '2026-05-17', home: 'guardians', away: 'hawks' },
+            { date: '2026-05-19', home: 'dragon', away: 'hawks' },
+            { date: '2026-05-20', home: 'monkey', away: 'brothers' },
+            { date: '2026-05-20', home: 'dragon', away: 'hawks' },
+            { date: '2026-05-20', home: 'guardians', away: 'lions' },
+            { date: '2026-05-21', home: 'guardians', away: 'lions' },
+            { date: '2026-05-22', home: 'monkey', away: 'guardians' },
+            { date: '2026-05-22', home: 'brothers', away: 'dragon' },
+            { date: '2026-05-22', home: 'hawks', away: 'lions' },
+            { date: '2026-05-23', home: 'monkey', away: 'guardians' },
+            { date: '2026-05-23', home: 'brothers', away: 'dragon' },
+            { date: '2026-05-23', home: 'hawks', away: 'lions' },
+            { date: '2026-05-24', home: 'monkey', away: 'guardians' },
+            { date: '2026-05-24', home: 'brothers', away: 'dragon' },
+            { date: '2026-05-24', home: 'hawks', away: 'lions' },
+            { date: '2026-05-26', home: 'dragon', away: 'guardians' },
+            { date: '2026-05-26', home: 'lions', away: 'monkey' },
+            { date: '2026-05-27', home: 'dragon', away: 'guardians' },
+            { date: '2026-05-27', home: 'lions', away: 'monkey' },
+            { date: '2026-05-27', home: 'hawks', away: 'brothers' },
+            { date: '2026-05-28', home: 'hawks', away: 'brothers' },
+            { date: '2026-05-29', home: 'dragon', away: 'lions' },
+            { date: '2026-05-29', home: 'guardians', away: 'brothers' },
+            { date: '2026-05-29', home: 'monkey', away: 'hawks' },
+            { date: '2026-05-30', home: 'dragon', away: 'lions' },
+            { date: '2026-05-30', home: 'guardians', away: 'brothers' },
+            { date: '2026-05-30', home: 'monkey', away: 'hawks' },
+            { date: '2026-05-31', home: 'dragon', away: 'lions' },
+            { date: '2026-05-31', home: 'guardians', away: 'brothers' },
+            { date: '2026-05-31', home: 'monkey', away: 'hawks' },
+
+            // === JUNE ===
+            { date: '2026-06-02', home: 'brothers', away: 'lions' },
+            { date: '2026-06-03', home: 'brothers', away: 'lions' },
+            { date: '2026-06-03', home: 'monkey', away: 'dragon' },
+            { date: '2026-06-03', home: 'hawks', away: 'guardians' },
+            { date: '2026-06-04', home: 'hawks', away: 'guardians' },
+            // FIX: 6/5-7 -> 獅(主) vs 悍將
+            { date: '2026-06-05', home: 'brothers', away: 'monkey' },
+            { date: '2026-06-05', home: 'lions', away: 'guardians' },
+            { date: '2026-06-05', home: 'hawks', away: 'dragon' },
+            { date: '2026-06-06', home: 'brothers', away: 'monkey' },
+            { date: '2026-06-06', home: 'lions', away: 'guardians' },
+            { date: '2026-06-06', home: 'hawks', away: 'dragon' },
+            { date: '2026-06-07', home: 'brothers', away: 'monkey' },
+            { date: '2026-06-07', home: 'lions', away: 'guardians' },
+            { date: '2026-06-07', home: 'hawks', away: 'dragon' },
+            
+            { date: '2026-06-09', home: 'guardians', away: 'dragon' },
+            { date: '2026-06-09', home: 'brothers', away: 'hawks' },
+            // 6/10 Only Mon vs Lio
+            { date: '2026-06-10', home: 'monkey', away: 'lions' }, 
+            
+            { date: '2026-06-11', home: 'dragon', away: 'brothers' },
+            { date: '2026-06-11', home: 'guardians', away: 'lions' },
+            { date: '2026-06-11', home: 'hawks', away: 'monkey' },
+            { date: '2026-06-12', home: 'dragon', away: 'brothers' },
+            { date: '2026-06-12', home: 'guardians', away: 'lions' },
+            { date: '2026-06-12', home: 'hawks', away: 'monkey' },
+            // FIX: 6/13-14 -> 悍將(主) vs 雄鷹
+            { date: '2026-06-13', home: 'dragon', away: 'lions' },
+            { date: '2026-06-13', home: 'guardians', away: 'hawks' },
+            { date: '2026-06-13', home: 'brothers', away: 'monkey' },
+            { date: '2026-06-14', home: 'dragon', away: 'lions' },
+            { date: '2026-06-14', home: 'guardians', away: 'hawks' },
+            { date: '2026-06-14', home: 'brothers', away: 'monkey' },
+            // FIX: 6/16 -> 獅(主) vs 桃猿, 雄鷹(主) vs 象
+            { date: '2026-06-16', home: 'lions', away: 'monkey' },
+            { date: '2026-06-16', home: 'hawks', away: 'brothers' },
+            
+            { date: '2026-06-17', home: 'dragon', away: 'guardians' },
+            // FIX: 6/18-19 -> 象(主) vs 悍將
+            { date: '2026-06-18', home: 'lions', away: 'hawks' },
+            { date: '2026-06-18', home: 'monkey', away: 'dragon' },
+            { date: '2026-06-18', home: 'brothers', away: 'guardians' },
+            { date: '2026-06-19', home: 'lions', away: 'hawks' },
+            { date: '2026-06-19', home: 'monkey', away: 'dragon' },
+            { date: '2026-06-19', home: 'brothers', away: 'guardians' },
+            
+            { date: '2026-06-20', home: 'lions', away: 'brothers' },
+            { date: '2026-06-20', home: 'monkey', away: 'guardians' },
+            { date: '2026-06-20', home: 'hawks', away: 'dragon' },
+            { date: '2026-06-21', home: 'lions', away: 'brothers' },
+            { date: '2026-06-21', home: 'monkey', away: 'guardians' },
+            { date: '2026-06-21', home: 'hawks', away: 'dragon' },
+
+            // === JULY (2nd Half) ===
+            { date: '2026-07-03', home: 'hawks', away: 'lions' },
+            { date: '2026-07-03', home: 'dragon', away: 'guardians' },
+            { date: '2026-07-03', home: 'brothers', away: 'monkey' },
+            { date: '2026-07-04', home: 'hawks', away: 'lions' },
+            { date: '2026-07-04', home: 'dragon', away: 'guardians' },
+            { date: '2026-07-04', home: 'brothers', away: 'monkey' },
+            { date: '2026-07-05', home: 'hawks', away: 'lions' },
+            { date: '2026-07-05', home: 'dragon', away: 'guardians' },
+            { date: '2026-07-05', home: 'brothers', away: 'monkey' },
+            { date: '2026-07-07', home: 'guardians', away: 'monkey' },
+            { date: '2026-07-07', home: 'lions', away: 'brothers' },
+            { date: '2026-07-08', home: 'guardians', away: 'monkey' },
+            { date: '2026-07-08', home: 'lions', away: 'brothers' },
+            { date: '2026-07-08', home: 'dragon', away: 'hawks' },
+            { date: '2026-07-09', home: 'dragon', away: 'hawks' },
+            { date: '2026-07-10', home: 'guardians', away: 'brothers' },
+            { date: '2026-07-10', home: 'monkey', away: 'hawks' },
+            { date: '2026-07-10', home: 'lions', away: 'dragon' },
+            { date: '2026-07-11', home: 'guardians', away: 'brothers' },
+            { date: '2026-07-11', home: 'monkey', away: 'hawks' },
+            { date: '2026-07-11', home: 'lions', away: 'dragon' },
+            { date: '2026-07-12', home: 'guardians', away: 'brothers' },
+            { date: '2026-07-12', home: 'monkey', away: 'hawks' },
+            { date: '2026-07-12', home: 'lions', away: 'dragon' },
+            { date: '2026-07-14', home: 'brothers', away: 'dragon' },
+            { date: '2026-07-14', home: 'hawks', away: 'guardians' },
+            { date: '2026-07-15', home: 'brothers', away: 'dragon' },
+            { date: '2026-07-15', home: 'hawks', away: 'guardians' },
+            { date: '2026-07-15', home: 'monkey', away: 'lions' },
+            { date: '2026-07-16', home: 'monkey', away: 'lions' },
+            { date: '2026-07-21', home: 'brothers', away: 'hawks' },
+            { date: '2026-07-21', home: 'dragon', away: 'monkey' },
+            { date: '2026-07-22', home: 'brothers', away: 'hawks' },
+            { date: '2026-07-22', home: 'dragon', away: 'monkey' },
+            { date: '2026-07-22', home: 'lions', away: 'guardians' },
+            { date: '2026-07-23', home: 'lions', away: 'guardians' },
+            { date: '2026-07-24', home: 'brothers', away: 'lions' },
+            { date: '2026-07-24', home: 'hawks', away: 'dragon' },
+            { date: '2026-07-24', home: 'monkey', away: 'guardians' },
+            { date: '2026-07-25', home: 'brothers', away: 'lions' },
+            { date: '2026-07-25', home: 'hawks', away: 'dragon' },
+            { date: '2026-07-25', home: 'monkey', away: 'guardians' },
+            { date: '2026-07-26', home: 'brothers', away: 'lions' },
+            { date: '2026-07-26', home: 'hawks', away: 'dragon' },
+            { date: '2026-07-26', home: 'monkey', away: 'guardians' },
+            { date: '2026-07-28', home: 'guardians', away: 'dragon' },
+            { date: '2026-07-28', home: 'lions', away: 'hawks' },
+            { date: '2026-07-29', home: 'guardians', away: 'dragon' },
+            { date: '2026-07-29', home: 'lions', away: 'hawks' },
+            { date: '2026-07-29', home: 'monkey', away: 'brothers' },
+            { date: '2026-07-30', home: 'monkey', away: 'brothers' },
+            { date: '2026-07-31', home: 'guardians', away: 'hawks' },
+            { date: '2026-07-31', home: 'dragon', away: 'brothers' },
+            { date: '2026-07-31', home: 'lions', away: 'monkey' },
+
+            // === AUGUST ===
+            { date: '2026-08-01', home: 'guardians', away: 'hawks' },
+            { date: '2026-08-01', home: 'dragon', away: 'brothers' },
+            { date: '2026-08-01', home: 'lions', away: 'monkey' },
+            { date: '2026-08-02', home: 'guardians', away: 'hawks' },
+            { date: '2026-08-02', home: 'dragon', away: 'brothers' },
+            { date: '2026-08-02', home: 'lions', away: 'monkey' },
+            { date: '2026-08-04', home: 'hawks', away: 'monkey' },
+            { date: '2026-08-04', home: 'brothers', away: 'guardians' },
+            { date: '2026-08-05', home: 'hawks', away: 'monkey' },
+            { date: '2026-08-05', home: 'brothers', away: 'guardians' },
+            { date: '2026-08-05', home: 'dragon', away: 'lions' },
+            { date: '2026-08-06', home: 'dragon', away: 'lions' },
+            { date: '2026-08-07', home: 'hawks', away: 'brothers' },
+            { date: '2026-08-07', home: 'monkey', away: 'dragon' },
+            { date: '2026-08-07', home: 'guardians', away: 'lions' },
+            { date: '2026-08-08', home: 'hawks', away: 'brothers' },
+            { date: '2026-08-08', home: 'monkey', away: 'dragon' },
+            { date: '2026-08-08', home: 'guardians', away: 'lions' },
+            { date: '2026-08-09', home: 'hawks', away: 'brothers' },
+            { date: '2026-08-09', home: 'monkey', away: 'dragon' },
+            { date: '2026-08-09', home: 'guardians', away: 'lions' },
+            { date: '2026-08-11', home: 'lions', away: 'monkey' },
+            { date: '2026-08-11', home: 'hawks', away: 'dragon' },
+            { date: '2026-08-12', home: 'lions', away: 'monkey' },
+            { date: '2026-08-12', home: 'hawks', away: 'dragon' },
+            { date: '2026-08-12', home: 'guardians', away: 'brothers' },
+            { date: '2026-08-13', home: 'guardians', away: 'brothers' },
+            { date: '2026-08-14', home: 'lions', away: 'guardians' },
+            { date: '2026-08-14', home: 'dragon', away: 'monkey' },
+            { date: '2026-08-14', home: 'brothers', away: 'hawks' },
+            { date: '2026-08-15', home: 'lions', away: 'guardians' },
+            { date: '2026-08-15', home: 'dragon', away: 'monkey' },
+            { date: '2026-08-15', home: 'brothers', away: 'hawks' },
+            { date: '2026-08-16', home: 'lions', away: 'guardians' },
+            { date: '2026-08-16', home: 'dragon', away: 'monkey' },
+            { date: '2026-08-16', home: 'brothers', away: 'hawks' },
+            { date: '2026-08-18', home: 'hawks', away: 'lions' },
+            { date: '2026-08-18', home: 'monkey', away: 'guardians' },
+            { date: '2026-08-19', home: 'hawks', away: 'lions' },
+            { date: '2026-08-19', home: 'monkey', away: 'guardians' },
+            { date: '2026-08-19', home: 'dragon', away: 'brothers' },
+            { date: '2026-08-20', home: 'dragon', away: 'brothers' },
+            { date: '2026-08-21', home: 'hawks', away: 'monkey' },
+            { date: '2026-08-21', home: 'lions', away: 'brothers' },
+            { date: '2026-08-21', home: 'guardians', away: 'dragon' },
+            { date: '2026-08-22', home: 'hawks', away: 'monkey' },
+            { date: '2026-08-22', home: 'lions', away: 'brothers' },
+            { date: '2026-08-22', home: 'guardians', away: 'dragon' },
+            { date: '2026-08-23', home: 'hawks', away: 'monkey' },
+            { date: '2026-08-23', home: 'lions', away: 'brothers' },
+            { date: '2026-08-23', home: 'guardians', away: 'dragon' },
+            { date: '2026-08-25', home: 'brothers', away: 'monkey' },
+            { date: '2026-08-25', home: 'lions', away: 'dragon' },
+            { date: '2026-08-26', home: 'brothers', away: 'monkey' },
+            { date: '2026-08-26', home: 'lions', away: 'dragon' },
+            { date: '2026-08-26', home: 'guardians', away: 'hawks' },
+            { date: '2026-08-27', home: 'guardians', away: 'hawks' },
+            // FIX: 8/28-30 -> Brothers Home
+            { date: '2026-08-28', home: 'brothers', away: 'guardians' },
+            { date: '2026-08-28', home: 'monkey', away: 'lions' },
+            { date: '2026-08-28', home: 'dragon', away: 'hawks' },
+            { date: '2026-08-29', home: 'brothers', away: 'guardians' },
+            { date: '2026-08-29', home: 'monkey', away: 'lions' },
+            { date: '2026-08-29', home: 'dragon', away: 'hawks' },
+            { date: '2026-08-30', home: 'brothers', away: 'guardians' },
+            { date: '2026-08-30', home: 'monkey', away: 'lions' },
+            { date: '2026-08-30', home: 'dragon', away: 'hawks' },
+
+            // === SEPTEMBER ===
+            { date: '2026-09-01', home: 'guardians', away: 'lions' },
+            { date: '2026-09-01', home: 'hawks', away: 'brothers' },
+            { date: '2026-09-02', home: 'guardians', away: 'lions' },
+            { date: '2026-09-02', home: 'hawks', away: 'brothers' },
+            { date: '2026-09-02', home: 'monkey', away: 'dragon' },
+            { date: '2026-09-03', home: 'monkey', away: 'dragon' },
+            { date: '2026-09-04', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-04', home: 'lions', away: 'hawks' },
+            { date: '2026-09-04', home: 'brothers', away: 'dragon' },
+            { date: '2026-09-05', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-05', home: 'lions', away: 'hawks' },
+            { date: '2026-09-05', home: 'brothers', away: 'dragon' },
+            { date: '2026-09-06', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-06', home: 'lions', away: 'hawks' },
+            { date: '2026-09-06', home: 'brothers', away: 'dragon' },
+            { date: '2026-09-08', home: 'dragon', away: 'guardians' },
+            { date: '2026-09-08', home: 'monkey', away: 'hawks' },
+            { date: '2026-09-09', home: 'dragon', away: 'guardians' },
+            { date: '2026-09-09', home: 'monkey', away: 'hawks' },
+            { date: '2026-09-09', home: 'brothers', away: 'lions' },
+            { date: '2026-09-10', home: 'brothers', away: 'lions' },
+            // FIX: 9/11-13 -> Hawks Home
+            { date: '2026-09-11', home: 'dragon', away: 'lions' },
+            { date: '2026-09-11', home: 'monkey', away: 'brothers' },
+            { date: '2026-09-11', home: 'hawks', away: 'guardians' },
+            { date: '2026-09-12', home: 'dragon', away: 'lions' },
+            { date: '2026-09-12', home: 'monkey', away: 'brothers' },
+            { date: '2026-09-12', home: 'hawks', away: 'guardians' },
+            { date: '2026-09-13', home: 'dragon', away: 'lions' },
+            { date: '2026-09-13', home: 'monkey', away: 'brothers' },
+            { date: '2026-09-13', home: 'hawks', away: 'guardians' },
+            
+            { date: '2026-09-15', home: 'hawks', away: 'brothers' },
+            { date: '2026-09-15', home: 'lions', away: 'monkey' },
+            { date: '2026-09-16', home: 'dragon', away: 'guardians' },
+            { date: '2026-09-17', home: 'brothers', away: 'lions' },
+            { date: '2026-09-17', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-17', home: 'dragon', away: 'hawks' },
+            { date: '2026-09-18', home: 'brothers', away: 'lions' },
+            { date: '2026-09-18', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-18', home: 'dragon', away: 'hawks' },
+            { date: '2026-09-19', home: 'brothers', away: 'dragon' },
+            { date: '2026-09-19', home: 'monkey', away: 'hawks' },
+            { date: '2026-09-19', home: 'lions', away: 'guardians' },
+            { date: '2026-09-20', home: 'brothers', away: 'dragon' },
+            { date: '2026-09-20', home: 'monkey', away: 'hawks' },
+            { date: '2026-09-20', home: 'lions', away: 'guardians' },
+            { date: '2026-09-24', home: 'hawks', away: 'guardians' },
+            { date: '2026-09-24', home: 'monkey', away: 'brothers' },
+            { date: '2026-09-24', home: 'lions', away: 'dragon' },
+            { date: '2026-09-25', home: 'hawks', away: 'guardians' },
+            { date: '2026-09-25', home: 'monkey', away: 'brothers' },
+            { date: '2026-09-25', home: 'lions', away: 'dragon' },
+            // FIX: 9/26-27 -> Guardians Home
+            { date: '2026-09-26', home: 'hawks', away: 'lions' },
+            { date: '2026-09-26', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-26', home: 'dragon', away: 'brothers' },
+            { date: '2026-09-27', home: 'hawks', away: 'lions' },
+            { date: '2026-09-27', home: 'guardians', away: 'monkey' },
+            { date: '2026-09-27', home: 'dragon', away: 'brothers' },
+            { date: '2026-09-28', home: 'brothers', away: 'hawks' },
+            { date: '2026-09-28', home: 'monkey', away: 'lions' },
+            { date: '2026-09-28', home: 'guardians', away: 'dragon' }
+        ];
+
+        // 2026 Taiwan Holidays Object Map
+        const holidayMap = {
+            '2026-01-01': '元旦',
+            '2026-02-14': '春節', '2026-02-15': '春節', '2026-02-16': '春節', '2026-02-17': '春節', 
+            '2026-02-18': '春節', '2026-02-19': '春節', '2026-02-20': '春節', '2026-02-21': '春節', '2026-02-22': '春節',
+            '2026-02-27': '228連假', '2026-02-28': '228和平紀念日', '2026-03-01': '228連假',
+            '2026-03-28': '開幕戰',
+            '2026-04-03': '清明連假', '2026-04-04': '兒童節', '2026-04-05': '清明節', '2026-04-06': '清明連假',
+            '2026-05-01': '勞動節', '2026-05-02': '勞動節連假', '2026-05-03': '勞動節連假',
+            '2026-06-19': '端午節', '2026-06-20': '端午連假', '2026-06-21': '端午連假',
+            '2026-09-25': '中秋節', '2026-09-26': '連假', '2026-09-27': '連假', '2026-09-28': '教師節',
+            '2026-10-09': '國慶連假', '2026-10-10': '國慶日', '2026-10-11': '國慶連假',
+            '2026-10-24': '光復節連假', '2026-10-25': '光復節', '2026-10-26': '光復節補假',
+            '2026-12-25': '行憲紀念日', '2026-12-26': '連假', '2026-12-27': '連假'
+        };
+
+        // --- Render Functions ---
+        
+        // Mode Toggle
+        const displayModeToggle = document.getElementById('display-mode-toggle');
+        const modeOptions = document.querySelectorAll('.mode-option');
+        
+        modeOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                // Prevent bubbling if needed, but here simple click is fine
+                const val = e.target.dataset.value;
+                displayMode = val;
+                
+                // UI update
+                displayModeToggle.dataset.state = val;
+                modeOptions.forEach(o => o.classList.remove('selected'));
+                e.target.classList.add('selected');
+                
+                // Refresh data
+                renderCalendars();
+                updateStats();
+            });
+        });
+
+        function renderTeamFilters() {
+            const container = document.getElementById('team-filters');
+            container.innerHTML = teamKeys.map(key => {
+                const team = teamsConfig[key];
+                return `
+                    <button 
+                        class="team-filter-btn active px-4 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-all"
+                        style="background-color: ${team.color}; color: ${team.textColor};"
+                        data-team="${key}"
+                    >
+                        <span class="check-icon">✓</span>
+                        <span>${team.name}</span>
+                    </button>
+                `;
+            }).join('');
+
+            // Attach click handlers
+            container.querySelectorAll('.team-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const team = btn.dataset.team;
+                    if (selectedTeams.has(team)) {
+                        selectedTeams.delete(team);
+                        btn.classList.remove('active');
+                        btn.classList.add('inactive');
+                        // Reset styles
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                        btn.style.borderColor = '';
+                    } else {
+                        selectedTeams.add(team);
+                        btn.classList.remove('inactive');
+                        btn.classList.add('active');
+                        // Re-apply styles
+                        const conf = teamsConfig[team];
+                        btn.style.backgroundColor = conf.color;
+                        btn.style.color = conf.textColor;
+                        btn.style.borderColor = conf.color;
+                    }
+                    renderCalendars();
+                    updateStats();
+                });
+            });
+
+            document.getElementById('btn-select-all').addEventListener('click', () => {
+                selectedTeams = new Set(teamKeys);
+                container.querySelectorAll('.team-filter-btn').forEach(btn => {
+                    const team = btn.dataset.team;
+                    const conf = teamsConfig[team];
+                    btn.classList.remove('inactive');
+                    btn.classList.add('active');
+                    btn.style.backgroundColor = conf.color;
+                    btn.style.color = conf.textColor;
+                    btn.style.borderColor = conf.color;
+                });
+                renderCalendars();
+                updateStats();
+            });
+
+            document.getElementById('btn-deselect-all').addEventListener('click', () => {
+                selectedTeams.clear();
+                container.querySelectorAll('.team-filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.add('inactive');
+                    btn.style.backgroundColor = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                });
+                renderCalendars();
+                updateStats();
+            });
+        }
+
+        function renderCalendars() {
+            const container = document.getElementById('calendars-container');
+            const months = ['3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月'];
+            const monthNums = [3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+            container.innerHTML = monthNums.map((month, idx) => {
+                const firstDay = new Date(2026, month - 1, 1);
+                const lastDay = new Date(2026, month, 0);
+                const daysInMonth = lastDay.getDate();
+                const startWeekday = firstDay.getDay();
+
+                let calendarHTML = `
+                    <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200">
+                        <div class="bg-gradient-to-r from-slate-700 to-slate-600 text-white text-center py-4 font-bold text-xl">
+                            ${months[idx]}
+                        </div>
+                        <div class="calendar-header">
+                            <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+                        </div>
+                        <div class="calendar-grid">
+                `;
+
+                // Empty cells before month starts (adjust for Monday start)
+                const adjustedStartWeekday = (startWeekday === 0) ? 6 : startWeekday - 1;
+                for (let i = 0; i < adjustedStartWeekday; i++) {
+                    calendarHTML += '<div class="calendar-day"></div>';
+                }
+
+                // Days of the month
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const holidayName = holidayMap[dateStr];
+                    const dayOfWeek = new Date(2026, month - 1, day).getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                    // Filter matches based on Display Mode
+                    const dayMatches = scheduleData.filter(m => {
+                        if (m.date !== dateStr) return false;
+                        
+                        if (displayMode === 'home') {
+                            // Only match if HOME team is selected
+                            return selectedTeams.has(m.home);
+                        } else {
+                            // Match if EITHER home OR away team is selected
+                            return selectedTeams.has(m.home) || selectedTeams.has(m.away);
+                        }
+                    });
+
+                    const matchBadges = dayMatches.map(match => {
+                        const homeTeam = teamsConfig[match.home];
+                        const awayTeam = teamsConfig[match.away];
+                        return `
+                            <div class="match-badge">
+                                <div class="match-team away" style="background-color: ${awayTeam.color}; color: ${awayTeam.textColor};">
+                                    ${awayTeam.short}
+                                </div>
+                                <span class="match-vs">vs</span>
+                                <div class="match-team home" style="background-color: ${homeTeam.color}; color: ${homeTeam.textColor};">
+                                    ${homeTeam.short} <span class="ml-1">${homeTeam.logo}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    const bgClass = (holidayName || isWeekend) ? 'holiday-bg' : '';
+                    const holidayLabel = holidayName ? `<span class="holiday-label">${holidayName}</span>` : '';
+
+                    calendarHTML += `
+                        <div class="calendar-day ${bgClass}">
+                            ${holidayLabel}
+                            <div class="text-xs text-slate-500 font-bold mb-1">${day}</div>
+                            ${matchBadges}
+                        </div>
+                    `;
+                }
+
+                calendarHTML += `
+                        </div>
+                    </div>
+                `;
+
+                return calendarHTML;
+            }).join('');
+        }
+
+        function updateStats() {
+            let weekdayCount = 0;
+            let fridayCount = 0;
+            let weekendCount = 0;
+            let totalCount = 0;
+
+            const dateHomeTeams = {}; // Track which teams have home games on each date
+
+            scheduleData.forEach(match => {
+                // Determine if this match should be counted based on current filters
+                let isMatchVisible = false;
+                if (displayMode === 'home') {
+                    isMatchVisible = selectedTeams.has(match.home);
+                } else {
+                    isMatchVisible = selectedTeams.has(match.home) || selectedTeams.has(match.away);
+                }
+
+                if (!isMatchVisible) return;
+
+                totalCount++;
+                const date = new Date(match.date);
+                const dayOfWeek = date.getDay();
+                const isHoliday = holidayMap[match.date] !== undefined;
+
+                if (isHoliday || dayOfWeek === 0 || dayOfWeek === 6) {
+                    weekendCount++;
+                } else if (dayOfWeek === 5) {
+                    fridayCount++;
+                } else {
+                    weekdayCount++;
+                }
+            });
+
+            // Calculate conflict days (Always based on HOME games of selected teams, regardless of display mode)
+            // Logic: "所選隊伍同日皆有主場"
+            let conflictDays = 0;
+            
+            // Re-scan for conflicts strictly based on selected teams' home games
+            const conflictMap = {};
+            scheduleData.forEach(match => {
+                if (selectedTeams.has(match.home)) {
+                    if (!conflictMap[match.date]) conflictMap[match.date] = new Set();
+                    conflictMap[match.date].add(match.home);
+                }
+            });
+            
+            Object.values(conflictMap).forEach(teamsSet => {
+                if (teamsSet.size > 1) conflictDays++;
+            });
+
+            document.getElementById('stat-weekday').textContent = weekdayCount;
+            document.getElementById('stat-friday').textContent = fridayCount;
+            document.getElementById('stat-weekend').textContent = weekendCount;
+            document.getElementById('stat-total').textContent = totalCount;
+            document.getElementById('stat-conflict').textContent = conflictDays;
+            
+            // Update total label based on mode
+            const totalDesc = document.getElementById('stat-total-desc');
+            totalDesc.textContent = displayMode === 'home' ? '場主場賽事' : '場相關賽事';
+        }
+
+        // --- Initialize ---
+        renderTeamFilters();
+        renderCalendars();
+        updateStats();
+    </script>
+
+</body>
+</html>
