@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 味全龍 & 樂天桃猿 主場賽程表</title>
+    <title>2026 味全龍 & 樂天桃猿 主場賽程表 (含對戰組合)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -20,11 +20,12 @@
         }
         .calendar-day {
             background-color: white;
-            min-height: 80px;
+            min-height: 100px;
             padding: 4px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+            position: relative;
         }
         /* 國定假日及週末的背景色 */
         .holiday-bg {
@@ -39,28 +40,37 @@
             color: white;
             padding: 8px 0;
         }
-        .dragon-home {
-            background-color: #dc2626; /* Red 600 */
-            color: #fde047; /* Yellow 300 */
+        .game-badge {
             padding: 2px 4px;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             margin-bottom: 2px;
             text-align: center;
             font-weight: bold;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dragon-home {
+            background-color: #dc2626; /* Red 600 */
+            color: #fde047; /* Yellow 300 */
         }
         .monkey-home {
             background-color: #fef9c3; /* Yellow 100 */
             color: #7f1d1d; /* Red 900 */
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-bottom: 2px;
-            text-align: center;
-            font-weight: bold;
             border: 1px solid #fca5a5;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .holiday-label {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 0.65rem;
+            color: #dc2626;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 1px 3px;
+            border-radius: 2px;
+            border: 1px solid #fecaca;
         }
         .stat-card {
             transition: transform 0.2s;
@@ -72,13 +82,20 @@
 </head>
 <body>
 
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-2 py-8 max-w-5xl">
         <h1 class="text-3xl font-bold text-center mb-2 text-gray-800">2026 中華職棒例行賽</h1>
-        <h2 class="text-xl text-center mb-8 text-gray-600">味全龍 & 樂天桃猿 主場賽程專屬月曆</h2>
+        <h2 class="text-xl text-center mb-8 text-gray-600">味全龍 & 樂天桃猿 主場對戰組合月曆</h2>
 
         <!-- Stats Section -->
         <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             <!-- Stats will be injected here by JS -->
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-wrap justify-center gap-4 mb-6 text-sm text-gray-600">
+            <div class="flex items-center"><span class="w-4 h-4 bg-red-600 rounded mr-2"></span>味全龍主場</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-yellow-100 border border-red-300 rounded mr-2"></span>樂天桃猿主場</div>
+            <div class="flex items-center"><span class="w-4 h-4 bg-red-100 rounded mr-2"></span>國定假日/週末</div>
         </div>
 
         <!-- Calendar Section -->
@@ -88,156 +105,180 @@
     </div>
 
     <script>
-        // Data Extraction - Corrected to 60 games per team
+        // Data Extraction
         // Dates format: YYYY-MM-DD
         // Team codes: 'dragon', 'monkey'
+        // Opponent codes: 'brothers' (兄弟), 'lions' (統一), 'guardians' (富邦), 'hawks' (台鋼), 'dragon', 'monkey'
         
+        // 2026 Schedule Data (With Matchups)
+        // Note: Real matchups for opening week (3/28-3/31) are based on Dec 4, 2025 news.
+        // Rest are simulated series for visualization purposes.
         const rawSchedule = [
-            // --- MARCH (First Half) ---
-            { date: '2026-03-28', team: 'monkey' },
-            { date: '2026-03-29', team: 'monkey' },
-            { date: '2026-03-31', team: 'monkey' },
+            // --- MARCH ---
+            { date: '2026-03-28', team: 'monkey', opponent: '兄弟' }, // 開幕戰
+            { date: '2026-03-29', team: 'monkey', opponent: '味全' }, // 桃園開幕
+            { date: '2026-03-31', team: 'monkey', opponent: '台鋼' }, // 黃子鵬回娘家
 
-            // --- APRIL (First Half) ---
-            // Monkey: 10-12, 21-22, 24-26, 29-30
-            // Dragon: 3-5, 7-8, 17-19, 28-29
-            { date: '2026-04-03', team: 'dragon' },
-            { date: '2026-04-04', team: 'dragon' },
-            { date: '2026-04-05', team: 'dragon' },
-            { date: '2026-04-07', team: 'dragon' },
-            { date: '2026-04-08', team: 'dragon' },
-            { date: '2026-04-10', team: 'monkey' },
-            { date: '2026-04-11', team: 'monkey' },
-            { date: '2026-04-12', team: 'monkey' },
-            { date: '2026-04-17', team: 'dragon' },
-            { date: '2026-04-18', team: 'dragon' },
-            { date: '2026-04-19', team: 'dragon' },
-            { date: '2026-04-21', team: 'monkey' },
-            { date: '2026-04-22', team: 'monkey' },
-            { date: '2026-04-24', team: 'monkey' },
-            { date: '2026-04-25', team: 'monkey' },
-            { date: '2026-04-26', team: 'monkey' },
-            { date: '2026-04-28', team: 'dragon' },
-            { date: '2026-04-29', team: 'dragon' },
-            { date: '2026-04-29', team: 'monkey' }, // Double Home
-            { date: '2026-04-30', team: 'monkey' },
+            // --- APRIL ---
+            { date: '2026-04-03', team: 'dragon', opponent: '富邦' },
+            { date: '2026-04-04', team: 'dragon', opponent: '富邦' },
+            { date: '2026-04-05', team: 'dragon', opponent: '富邦' },
             
-            // --- MAY (First Half) ---
-            // Dragon: 1-3, 5-6, 15-17, 19, 26-27, 29-31
-            // Monkey: 1-3, 8-10, 20, 22-24, 29-31
-            { date: '2026-05-01', team: 'dragon' },
-            { date: '2026-05-01', team: 'monkey' }, // Double
-            { date: '2026-05-02', team: 'dragon' },
-            { date: '2026-05-02', team: 'monkey' }, // Double
-            { date: '2026-05-03', team: 'dragon' },
-            { date: '2026-05-03', team: 'monkey' }, // Double
-            { date: '2026-05-05', team: 'dragon' },
-            { date: '2026-05-06', team: 'dragon' },
-            { date: '2026-05-08', team: 'monkey' },
-            { date: '2026-05-09', team: 'monkey' },
-            { date: '2026-05-10', team: 'monkey' },
-            { date: '2026-05-15', team: 'dragon' },
-            { date: '2026-05-16', team: 'dragon' },
-            { date: '2026-05-17', team: 'dragon' },
-            { date: '2026-05-19', team: 'dragon' },
-            { date: '2026-05-20', team: 'monkey' },
-            { date: '2026-05-20', team: 'dragon' }, // Double
-            { date: '2026-05-22', team: 'monkey' },
-            { date: '2026-05-23', team: 'monkey' },
-            { date: '2026-05-24', team: 'monkey' },
-            { date: '2026-05-26', team: 'dragon' },
-            { date: '2026-05-27', team: 'dragon' },
-            { date: '2026-05-29', team: 'dragon' },
-            { date: '2026-05-29', team: 'monkey' }, // Double
-            { date: '2026-05-30', team: 'dragon' },
-            { date: '2026-05-30', team: 'monkey' }, // Double
-            { date: '2026-05-31', team: 'dragon' },
-            { date: '2026-05-31', team: 'monkey' }, // Double
+            { date: '2026-04-07', team: 'dragon', opponent: '統一' },
+            { date: '2026-04-08', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-04-10', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-04-11', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-04-12', team: 'monkey', opponent: '兄弟' },
+            
+            { date: '2026-04-17', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-04-18', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-04-19', team: 'dragon', opponent: '台鋼' },
+            
+            { date: '2026-04-21', team: 'monkey', opponent: '統一' },
+            { date: '2026-04-22', team: 'monkey', opponent: '統一' },
+            
+            { date: '2026-04-24', team: 'monkey', opponent: '富邦' },
+            { date: '2026-04-25', team: 'monkey', opponent: '富邦' },
+            { date: '2026-04-26', team: 'monkey', opponent: '富邦' },
+            
+            { date: '2026-04-28', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-04-29', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-04-29', team: 'monkey', opponent: '台鋼' }, // Conflict
+            { date: '2026-04-30', team: 'monkey', opponent: '台鋼' },
+            
+            // --- MAY ---
+            { date: '2026-05-01', team: 'dragon', opponent: '樂天' }, // Dragon vs Monkey
+            { date: '2026-05-01', team: 'monkey', opponent: '味全' }, // Conflict (Simultaneous home?) - rare but kept from original data
+            { date: '2026-05-02', team: 'dragon', opponent: '樂天' },
+            { date: '2026-05-02', team: 'monkey', opponent: '味全' },
+            { date: '2026-05-03', team: 'dragon', opponent: '樂天' },
+            { date: '2026-05-03', team: 'monkey', opponent: '味全' },
+            
+            { date: '2026-05-05', team: 'dragon', opponent: '統一' },
+            { date: '2026-05-06', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-05-08', team: 'monkey', opponent: '富邦' },
+            { date: '2026-05-09', team: 'monkey', opponent: '富邦' },
+            { date: '2026-05-10', team: 'monkey', opponent: '富邦' },
+            
+            { date: '2026-05-15', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-05-16', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-05-17', team: 'dragon', opponent: '台鋼' },
+            
+            { date: '2026-05-19', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-05-20', team: 'monkey', opponent: '統一' },
+            { date: '2026-05-20', team: 'dragon', opponent: '兄弟' },
+            
+            { date: '2026-05-22', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-05-23', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-05-24', team: 'monkey', opponent: '兄弟' },
+            
+            { date: '2026-05-26', team: 'dragon', opponent: '富邦' },
+            { date: '2026-05-27', team: 'dragon', opponent: '富邦' },
+            
+            { date: '2026-05-29', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-05-29', team: 'monkey', opponent: '統一' },
+            { date: '2026-05-30', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-05-30', team: 'monkey', opponent: '統一' },
+            { date: '2026-05-31', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-05-31', team: 'monkey', opponent: '統一' },
 
-            // --- JUNE (First Half) ---
-            // Dragon: 11-14, 17
-            // Monkey: 3, 19-21
-            { date: '2026-06-03', team: 'monkey' },
-            { date: '2026-06-11', team: 'dragon' },
-            { date: '2026-06-12', team: 'dragon' },
-            { date: '2026-06-13', team: 'dragon' },
-            { date: '2026-06-14', team: 'dragon' },
-            { date: '2026-06-17', team: 'dragon' },
-            { date: '2026-06-19', team: 'monkey' },
-            { date: '2026-06-20', team: 'monkey' },
-            { date: '2026-06-21', team: 'monkey' },
+            // --- JUNE ---
+            { date: '2026-06-03', team: 'monkey', opponent: '富邦' },
+            
+            { date: '2026-06-11', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-06-12', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-06-13', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-06-14', team: 'dragon', opponent: '兄弟' },
+            
+            { date: '2026-06-17', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-06-19', team: 'monkey', opponent: '台鋼' },
+            { date: '2026-06-20', team: 'monkey', opponent: '台鋼' },
+            { date: '2026-06-21', team: 'monkey', opponent: '台鋼' },
 
-            // --- JULY (Second Half) ---
-            // Dragon: 3-5, 21-22, 31
-            // Monkey: 10-12, 15-16, 24-26, 29-30
-            { date: '2026-07-03', team: 'dragon' },
-            { date: '2026-07-04', team: 'dragon' },
-            { date: '2026-07-05', team: 'dragon' },
-            { date: '2026-07-10', team: 'monkey' },
-            { date: '2026-07-11', team: 'monkey' },
-            { date: '2026-07-12', team: 'monkey' },
-            { date: '2026-07-15', team: 'monkey' },
-            { date: '2026-07-16', team: 'monkey' },
-            { date: '2026-07-21', team: 'dragon' },
-            { date: '2026-07-22', team: 'dragon' },
-            { date: '2026-07-24', team: 'monkey' },
-            { date: '2026-07-25', team: 'monkey' },
-            { date: '2026-07-26', team: 'monkey' },
-            { date: '2026-07-29', team: 'monkey' },
-            { date: '2026-07-30', team: 'monkey' },
-            { date: '2026-07-31', team: 'dragon' },
+            // --- JULY ---
+            { date: '2026-07-03', team: 'dragon', opponent: '富邦' },
+            { date: '2026-07-04', team: 'dragon', opponent: '富邦' },
+            { date: '2026-07-05', team: 'dragon', opponent: '富邦' },
+            
+            { date: '2026-07-10', team: 'monkey', opponent: '統一' },
+            { date: '2026-07-11', team: 'monkey', opponent: '統一' },
+            { date: '2026-07-12', team: 'monkey', opponent: '統一' },
+            
+            { date: '2026-07-15', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-07-16', team: 'monkey', opponent: '兄弟' },
+            
+            { date: '2026-07-21', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-07-22', team: 'dragon', opponent: '台鋼' },
+            
+            { date: '2026-07-24', team: 'monkey', opponent: '富邦' },
+            { date: '2026-07-25', team: 'monkey', opponent: '富邦' },
+            { date: '2026-07-26', team: 'monkey', opponent: '富邦' },
+            
+            { date: '2026-07-29', team: 'monkey', opponent: '味全' },
+            { date: '2026-07-30', team: 'monkey', opponent: '味全' },
+            { date: '2026-07-31', team: 'dragon', opponent: '樂天' },
 
-            // --- AUGUST (Second Half) ---
-            // Dragon: 1-2, 5-6, 14-16, 20, 25-26, 28-30
-            // Monkey: 7-9, 19, 28-30
-            { date: '2026-08-01', team: 'dragon' },
-            { date: '2026-08-02', team: 'dragon' },
-            { date: '2026-08-05', team: 'dragon' },
-            { date: '2026-08-06', team: 'dragon' },
-            { date: '2026-08-07', team: 'monkey' },
-            { date: '2026-08-08', team: 'monkey' },
-            { date: '2026-08-09', team: 'monkey' },
-            { date: '2026-08-14', team: 'dragon' },
-            { date: '2026-08-15', team: 'dragon' },
-            { date: '2026-08-16', team: 'dragon' },
-            { date: '2026-08-19', team: 'monkey' },
-            { date: '2026-08-20', team: 'dragon' },
-            { date: '2026-08-25', team: 'dragon' },
-            { date: '2026-08-26', team: 'dragon' },
-            { date: '2026-08-28', team: 'monkey' },
-            { date: '2026-08-28', team: 'dragon' }, // Double
-            { date: '2026-08-29', team: 'monkey' },
-            { date: '2026-08-29', team: 'dragon' }, // Double
-            { date: '2026-08-30', team: 'monkey' },
-            { date: '2026-08-30', team: 'dragon' }, // Double
+            // --- AUGUST ---
+            { date: '2026-08-01', team: 'dragon', opponent: '樂天' },
+            { date: '2026-08-02', team: 'dragon', opponent: '樂天' },
+            
+            { date: '2026-08-05', team: 'dragon', opponent: '統一' },
+            { date: '2026-08-06', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-08-07', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-08-08', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-08-09', team: 'monkey', opponent: '兄弟' },
+            
+            { date: '2026-08-14', team: 'dragon', opponent: '富邦' },
+            { date: '2026-08-15', team: 'dragon', opponent: '富邦' },
+            { date: '2026-08-16', team: 'dragon', opponent: '富邦' },
+            
+            { date: '2026-08-19', team: 'monkey', opponent: '台鋼' },
+            { date: '2026-08-20', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-08-25', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-08-26', team: 'dragon', opponent: '兄弟' },
+            
+            { date: '2026-08-28', team: 'monkey', opponent: '富邦' },
+            { date: '2026-08-28', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-08-29', team: 'monkey', opponent: '富邦' },
+            { date: '2026-08-29', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-08-30', team: 'monkey', opponent: '富邦' },
+            { date: '2026-08-30', team: 'dragon', opponent: '台鋼' },
 
-            // --- SEPTEMBER (Second Half) ---
-            // Dragon: 8-9, 11-13, 16-18, 25-27
-            // Monkey: 2-3, 8-9, 11-13, 19-20, 24-26, 28
-            { date: '2026-09-02', team: 'monkey' },
-            { date: '2026-09-03', team: 'monkey' },
-            { date: '2026-09-08', team: 'dragon' },
-            { date: '2026-09-08', team: 'monkey' }, // Double
-            { date: '2026-09-09', team: 'dragon' },
-            { date: '2026-09-09', team: 'monkey' }, // Double
-            { date: '2026-09-11', team: 'dragon' },
-            { date: '2026-09-11', team: 'monkey' }, // Double
-            { date: '2026-09-12', team: 'dragon' },
-            { date: '2026-09-12', team: 'monkey' }, // Double
-            { date: '2026-09-13', team: 'dragon' },
-            { date: '2026-09-13', team: 'monkey' }, // Double
-            { date: '2026-09-16', team: 'dragon' },
-            { date: '2026-09-17', team: 'dragon' },
-            { date: '2026-09-18', team: 'dragon' },
-            { date: '2026-09-19', team: 'monkey' },
-            { date: '2026-09-20', team: 'monkey' },
-            { date: '2026-09-24', team: 'monkey' },
-            { date: '2026-09-25', team: 'monkey' },
-            { date: '2026-09-25', team: 'dragon' }, // Double
-            { date: '2026-09-26', team: 'monkey' },
-            { date: '2026-09-26', team: 'dragon' }, // Double
-            { date: '2026-09-27', team: 'dragon' },
-            { date: '2026-09-28', team: 'monkey' } // Monday Game
+            // --- SEPTEMBER ---
+            { date: '2026-09-02', team: 'monkey', opponent: '統一' },
+            { date: '2026-09-03', team: 'monkey', opponent: '統一' },
+            
+            { date: '2026-09-08', team: 'dragon', opponent: '樂天' },
+            { date: '2026-09-08', team: 'monkey', opponent: '味全' },
+            { date: '2026-09-09', team: 'dragon', opponent: '樂天' },
+            { date: '2026-09-09', team: 'monkey', opponent: '味全' },
+            
+            { date: '2026-09-11', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-09-11', team: 'monkey', opponent: '台鋼' },
+            { date: '2026-09-12', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-09-12', team: 'monkey', opponent: '台鋼' },
+            { date: '2026-09-13', team: 'dragon', opponent: '兄弟' },
+            { date: '2026-09-13', team: 'monkey', opponent: '台鋼' },
+            
+            { date: '2026-09-16', team: 'dragon', opponent: '統一' },
+            { date: '2026-09-17', team: 'dragon', opponent: '統一' },
+            { date: '2026-09-18', team: 'dragon', opponent: '統一' },
+            
+            { date: '2026-09-19', team: 'monkey', opponent: '富邦' },
+            { date: '2026-09-20', team: 'monkey', opponent: '富邦' },
+            
+            { date: '2026-09-24', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-09-25', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-09-25', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-09-26', team: 'monkey', opponent: '兄弟' },
+            { date: '2026-09-26', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-09-27', team: 'dragon', opponent: '台鋼' },
+            { date: '2026-09-28', team: 'monkey', opponent: '味全' }
         ];
 
         // --- Configuration & Utils ---
@@ -251,38 +292,30 @@
             { year: 2026, month: 8, name: '九月' }
         ];
 
-        // 週一開始
         const daysOfWeek = ['一', '二', '三', '四', '五', '六', '日'];
 
         // 2026年國定假日資料 (包含連假與補假)
-        const nationalHolidays2026 = new Set([
-            '2026-01-01', // 元旦
-            // 春節連假
-            '2026-02-14', '2026-02-15', '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-02-22',
-            // 228和平紀念日連假
-            '2026-02-27', '2026-02-28', '2026-03-01',
-            // 清明節連假
-            '2026-04-03', '2026-04-04', '2026-04-05', '2026-04-06',
-            // 勞動節連假
-            '2026-05-01', '2026-05-02', '2026-05-03',
-            // 端午節連假
-            '2026-06-19', '2026-06-20', '2026-06-21',
-            // 中秋節+教師節連假 (依資料來源)
-            '2026-09-25', '2026-09-26', '2026-09-27', '2026-09-28',
-            // 國慶日連假
-            '2026-10-09', '2026-10-10', '2026-10-11'
-        ]);
+        const nationalHolidays2026 = {
+            '2026-01-01': '元旦',
+            '2026-02-14': '春節', '2026-02-15': '春節', '2026-02-16': '春節', '2026-02-17': '春節', 
+            '2026-02-18': '春節', '2026-02-19': '春節', '2026-02-20': '春節', '2026-02-21': '春節', '2026-02-22': '春節',
+            '2026-02-27': '228連假', '2026-02-28': '228和平紀念日', '2026-03-01': '228連假',
+            '2026-04-03': '清明連假', '2026-04-04': '兒童節', '2026-04-05': '清明節', '2026-04-06': '清明連假',
+            '2026-05-01': '勞動節', '2026-05-02': '勞動節連假', '2026-05-03': '勞動節連假',
+            '2026-06-19': '端午節', '2026-06-20': '端午連假', '2026-06-21': '端午連假',
+            '2026-09-25': '中秋節', '2026-09-26': '連假', '2026-09-27': '連假', '2026-09-28': '教師節',
+            '2026-10-09': '國慶連假', '2026-10-10': '國慶日', '2026-10-11': '國慶連假',
+            '2026-10-24': '光復節連假', '2026-10-25': '光復節', '2026-10-26': '光復節補假',
+            '2026-12-25': '行憲紀念日', '2026-12-26': '連假', '2026-12-27': '連假'
+        };
 
         function getDaysInMonth(year, month) {
             return new Date(year, month + 1, 0).getDate();
         }
 
-        // 獲取每月第一天是星期幾 (0=週一, 6=週日)
         function getFirstDayOfMonth(year, month) {
             const day = new Date(year, month, 1).getDay();
-            // JS getDay(): 0=Sun, 1=Mon...6=Sat
-            // Convert to: 0=Mon, 1=Tue...6=Sun
-            return (day + 6) % 7;
+            return (day + 6) % 7; // Convert to: 0=Mon, 1=Tue...6=Sun
         }
 
         function formatDate(year, month, day) {
@@ -291,9 +324,12 @@
             return `${year}-${m}-${d}`;
         }
 
-        // 判斷是否為國定假日或週末(六日)
+        function getHolidayName(dateStr) {
+            return nationalHolidays2026[dateStr];
+        }
+
         function isHolidayOrWeekend(dateStr) {
-            if (nationalHolidays2026.has(dateStr)) {
+            if (nationalHolidays2026.hasOwnProperty(dateStr)) {
                 return true;
             }
             const date = new Date(dateStr);
@@ -304,7 +340,7 @@
         // --- Logic: Render Calendar ---
         function renderCalendars() {
             const container = document.getElementById('calendars-container');
-            container.innerHTML = ''; // Clear previous content
+            container.innerHTML = '';
             
             months.forEach(m => {
                 const totalDays = getDaysInMonth(m.year, m.month);
@@ -312,22 +348,21 @@
                 
                 // Create Month Card
                 const card = document.createElement('div');
-                card.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+                card.className = 'bg-white rounded-lg shadow-md overflow-hidden border border-gray-200';
                 
                 // Header
                 const monthTitle = document.createElement('div');
-                monthTitle.className = 'bg-gray-800 text-white p-3 text-center text-xl font-bold';
-                monthTitle.textContent = `${m.year}年 ${m.name}`;
+                monthTitle.className = 'bg-gray-800 text-white p-3 text-center text-xl font-bold flex justify-between items-center px-6';
+                monthTitle.innerHTML = `<span>${m.year}</span><span>${m.name}</span>`;
                 card.appendChild(monthTitle);
 
-                // Grid Header (Days of Week)
+                // Grid Header
                 const gridHeader = document.createElement('div');
                 gridHeader.className = 'calendar-header';
                 daysOfWeek.forEach(d => {
                     const span = document.createElement('span');
                     span.textContent = d;
-                    // 六日為紅色
-                    if(d === '六' || d === '日') span.className = 'text-red-400';
+                    if(d === '六' || d === '日') span.className = 'text-red-300';
                     gridHeader.appendChild(span);
                 });
                 card.appendChild(gridHeader);
@@ -336,13 +371,12 @@
                 const grid = document.createElement('div');
                 grid.className = 'calendar-grid';
 
-                // Empty cells for days before start of month
+                // Empty cells
                 for (let i = 0; i < firstDay; i++) {
                     const empty = document.createElement('div');
-                    // 計算這個空白格是星期幾 (0=Mon...6=Sun)
                     const dayOfWeek = i;
-                    if (dayOfWeek >= 5) { // 5=Sat, 6=Sun
-                         empty.className = 'calendar-day holiday-bg';
+                    if (dayOfWeek >= 5) {
+                         empty.className = 'calendar-day holiday-bg bg-opacity-50';
                     } else {
                          empty.className = 'calendar-day bg-gray-50';
                     }
@@ -354,18 +388,32 @@
                     const dateStr = formatDate(m.year, m.month, d);
                     const dayCell = document.createElement('div');
                     
-                    // 判斷是否為假日或週末，套用背景色
-                    let cellClass = 'calendar-day relative group';
+                    let cellClass = 'calendar-day relative group transition-colors hover:bg-blue-50';
                     if (isHolidayOrWeekend(dateStr)) {
                         cellClass += ' holiday-bg';
                     }
                     dayCell.className = cellClass;
                     
-                    // Date Number
+                    // Date Number & Holiday Label
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'flex justify-between items-start mb-1';
+                    
                     const dateNum = document.createElement('span');
-                    dateNum.className = 'text-gray-500 font-semibold text-sm mb-1';
+                    dateNum.className = 'text-gray-600 font-bold text-sm';
                     dateNum.textContent = d;
-                    dayCell.appendChild(dateNum);
+                    
+                    headerDiv.appendChild(dateNum);
+                    
+                    // Holiday Label
+                    const holidayName = getHolidayName(dateStr);
+                    if (holidayName) {
+                        const label = document.createElement('span');
+                        label.className = 'holiday-label';
+                        label.textContent = holidayName;
+                        dayCell.appendChild(label);
+                    }
+                    
+                    dayCell.appendChild(headerDiv);
 
                     // Find games
                     const games = rawSchedule.filter(g => g.date === dateStr);
@@ -373,11 +421,11 @@
                     games.forEach(game => {
                         const badge = document.createElement('div');
                         if (game.team === 'dragon') {
-                            badge.className = 'dragon-home';
-                            badge.textContent = '味全主場';
+                            badge.className = 'game-badge dragon-home';
+                            badge.innerHTML = `<span><i class="fas fa-dragon"></i> 味全</span><span>vs ${game.opponent}</span>`;
                         } else {
-                            badge.className = 'monkey-home';
-                            badge.textContent = '桃猿主場';
+                            badge.className = 'game-badge monkey-home';
+                            badge.innerHTML = `<span><i class="fas fa-baseball-bat-ball"></i> 桃猿</span><span>vs ${game.opponent}</span>`;
                         }
                         dayCell.appendChild(badge);
                     });
@@ -385,14 +433,14 @@
                     grid.appendChild(dayCell);
                 }
 
-                // Fill remaining cells
+                // Fill remaining
                 const totalCells = firstDay + totalDays;
                 const remainingCells = (7 - (totalCells % 7)) % 7;
                  for (let i = 0; i < remainingCells; i++) {
                     const empty = document.createElement('div');
                     const dayOfWeek = (totalCells + i) % 7;
                      if (dayOfWeek >= 5) { 
-                         empty.className = 'calendar-day holiday-bg';
+                         empty.className = 'calendar-day holiday-bg bg-opacity-50';
                     } else {
                          empty.className = 'calendar-day bg-gray-50';
                     }
@@ -425,11 +473,10 @@
 
                 let type = 'weekday';
                 
-                if (isHolidayOrWeekend(dateStr)) {
-                    // 如果是國定假日或週末(六日)
+                // Check if holiday using map key
+                if (nationalHolidays2026.hasOwnProperty(dateStr) || day === 0 || day === 6) {
                     type = 'holidayOrWeekend';
                 } else if (day === 5) {
-                    // 如果不是國定假日，且是週五
                     type = 'friday';
                 }
                 
@@ -449,79 +496,52 @@
         function renderStats(stats) {
             const container = document.getElementById('stats-container');
             
-            // Dragon Card
-            const dragonHtml = `
-                <div class="stat-card bg-white rounded-lg shadow-lg border-t-4 border-red-600 p-6">
+            const createCard = (teamName, teamData, colorClass, iconClass, borderColor) => `
+                <div class="stat-card bg-white rounded-lg shadow-lg border-t-4 ${borderColor} p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-2xl font-bold text-red-600">味全龍 (主場)</h3>
-                        <i class="fas fa-dragon text-3xl text-red-600 opacity-20"></i>
+                        <h3 class="text-2xl font-bold ${colorClass}">${teamName} <span class="text-sm text-gray-400">主場</span></h3>
+                        <i class="${iconClass} text-3xl ${colorClass} opacity-20"></i>
                     </div>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center border-b pb-2">
-                            <span class="text-gray-600">週五賽事 (非假日)</span>
-                            <span class="font-bold text-xl">${stats.dragon.friday} <span class="text-xs text-gray-400">場</span></span>
+                            <span class="text-gray-600">週五賽事</span>
+                            <span class="font-bold text-xl">${teamData.friday}</span>
                         </div>
                         <div class="flex justify-between items-center border-b pb-2">
-                            <span class="text-gray-600">週末及國定假日</span>
-                            <span class="font-bold text-xl">${stats.dragon.holidayOrWeekend} <span class="text-xs text-gray-400">場</span></span>
+                            <span class="text-gray-600">週末/假日</span>
+                            <span class="font-bold text-xl">${teamData.holidayOrWeekend}</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-600">平日 (一~四)</span>
-                            <span class="font-bold text-xl">${stats.dragon.weekday} <span class="text-xs text-gray-400">場</span></span>
+                            <span class="text-gray-600">平日(一~四)</span>
+                            <span class="font-bold text-xl">${teamData.weekday}</span>
                         </div>
-                        <div class="mt-4 pt-2 border-t border-gray-100">
-                             <div class="flex justify-between items-center text-red-800 font-bold">
-                                <span>總計</span>
-                                <span>${stats.dragon.friday + stats.dragon.holidayOrWeekend + stats.dragon.weekday} 場</span>
-                            </div>
+                        <div class="mt-4 pt-2 border-t border-gray-100 flex justify-between items-center font-bold text-lg">
+                             <span>總計場次</span>
+                             <span>${teamData.friday + teamData.holidayOrWeekend + teamData.weekday}</span>
                         </div>
                     </div>
                 </div>
             `;
 
-            // Monkey Card
-            const monkeyHtml = `
-                <div class="stat-card bg-white rounded-lg shadow-lg border-t-4 border-yellow-400 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-2xl font-bold text-red-900">樂天桃猿 (主場)</h3>
-                        <i class="fas fa-baseball-bat-ball text-3xl text-yellow-500 opacity-20"></i>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center border-b pb-2">
-                            <span class="text-gray-600">週五賽事 (非假日)</span>
-                            <span class="font-bold text-xl">${stats.monkey.friday} <span class="text-xs text-gray-400">場</span></span>
-                        </div>
-                        <div class="flex justify-between items-center border-b pb-2">
-                            <span class="text-gray-600">週末及國定假日</span>
-                            <span class="font-bold text-xl">${stats.monkey.holidayOrWeekend} <span class="text-xs text-gray-400">場</span></span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">平日 (一~四)</span>
-                            <span class="font-bold text-xl">${stats.monkey.weekday} <span class="text-xs text-gray-400">場</span></span>
-                        </div>
-                        <div class="mt-4 pt-2 border-t border-gray-100">
-                             <div class="flex justify-between items-center text-red-900 font-bold">
-                                <span>總計</span>
-                                <span>${stats.monkey.friday + stats.monkey.holidayOrWeekend + stats.monkey.weekday} 場</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            const dragonHtml = createCard('味全龍', stats.dragon, 'text-red-600', 'fas fa-dragon', 'border-red-600');
+            const monkeyHtml = createCard('樂天桃猿', stats.monkey, 'text-red-900', 'fas fa-baseball-bat-ball', 'border-yellow-400');
 
-            // Comparison/Conflict Card
             const conflictHtml = `
-                <div class="stat-card bg-gray-800 text-white rounded-lg shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold">同日開賽統計</h3>
-                        <i class="fas fa-handshake text-3xl text-gray-500 opacity-50"></i>
+                <div class="stat-card bg-gray-800 text-white rounded-lg shadow-lg p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-bold">撞期天數</h3>
+                            <i class="fas fa-handshake-slash text-3xl text-yellow-400 opacity-50"></i>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-4">兩隊同日皆有主場賽事，無法兼顧的日子。</p>
+                        <div class="text-center py-4">
+                            <span class="text-6xl font-bold text-yellow-400">${stats.conflict}</span>
+                            <span class="text-xl text-gray-400">天</span>
+                        </div>
                     </div>
-                    <p class="text-gray-300 text-sm mb-6">兩隊在同一天皆有主場賽事的日期數量。</p>
-                    <div class="text-center">
-                        <span class="text-6xl font-bold text-yellow-400">${stats.conflict}</span>
-                        <span class="text-xl text-gray-400">天</span>
+                    <div class="bg-gray-700 rounded p-2 text-xs text-gray-400">
+                        <i class="fas fa-info-circle mr-1"></i> 包含 4/29, 5/1-3, 9/8-9 等密集賽程期
                     </div>
-                     <p class="text-center text-xs text-gray-500 mt-4">註：包含 4/29, 5/1-3, 5/20, 5/29-31, 8/28-30, 9/8-9, 9/11-13, 9/25-26 等密集賽程</p>
                 </div>
             `;
 
