@@ -1,1013 +1,1018 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar, Filter, Home, Users, ChevronDown, Info, AlertTriangle } from 'lucide-react';
-
-// --- DATA ---
-const RAW_DATA = {
-  "holidays": {
-    "2026-01-01": "元旦",
-    "2026-02-14": "春節", "2026-02-15": "春節", "2026-02-16": "春節", "2026-02-17": "春節", 
-    "2026-02-18": "春節", "2026-02-19": "春節", "2026-02-20": "春節", "2026-02-21": "春節", "2026-02-22": "春節",
-    "2026-02-27": "228連假", "2026-02-28": "228和平紀念日", "2026-03-01": "228連假",
-    "2026-03-28": "開幕戰",
-    "2026-04-03": "清明連假", "2026-04-04": "兒童節", "2026-04-05": "清明節", "2026-04-06": "清明連假",
-    "2026-05-01": "勞動節", "2026-05-02": "連假", "2026-05-03": "連假",
-    "2026-06-19": "端午節", "2026-06-20": "連假", "2026-06-21": "連假",
-    "2026-09-25": "中秋節", "2026-09-26": "連假", "2026-09-27": "連假", "2026-09-28": "教師節",
-    "2026-10-09": "國慶連假", "2026-10-10": "國慶日", "2026-10-11": "國慶連假",
-    "2026-10-24": "光復連假", "2026-10-25": "光復節", "2026-10-26": "補假",
-    "2026-12-25": "行憲紀念日", "2026-12-26": "連假", "2026-12-27": "連假"
-  },
-  "specialEvents": [
-    // 淺灰底 (Light)
-    { start: "2026-06-23", end: "2026-06-28", name: "補賽預備日", type: "light" },
-    { start: "2026-06-29", end: "2026-06-30", name: "上半季補賽周", type: "light" },
-    { start: "2026-07-01", end: "2026-07-01", name: "上半季加賽保留日", type: "light" },
-    { start: "2026-09-22", end: "2026-09-22", name: "下半季優先補賽日", type: "light" },
-    { start: "2026-09-29", end: "2026-10-04", name: "補賽預備日", type: "light" },
-    { start: "2026-10-05", end: "2026-10-06", name: "下半季補賽周", type: "light" },
-    { start: "2026-10-07", end: "2026-10-07", name: "上半季加賽保留日", type: "light" }, 
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 CPBL 賽程表</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    // 深灰底 (Dark)
-    { start: "2026-07-18", end: "2026-07-19", name: "明星賽", type: "dark" },
-    { start: "2026-10-09", end: "2026-10-13", name: "季後挑戰賽預定", type: "dark" },
-    { start: "2026-10-17", end: "2026-10-25", name: "總冠軍賽預定", type: "dark" },
-  ],
-  "matches": [
-    { "date": "2026-03-28", "home": "monkey", "away": "brothers" },
-    { "date": "2026-03-29", "home": "monkey", "away": "dragon" },
-    { "date": "2026-03-29", "home": "brothers", "away": "guardians" },
-    { "date": "2026-03-29", "home": "lions", "away": "hawks" },
-    { "date": "2026-03-31", "home": "brothers", "away": "dragon" },
-    { "date": "2026-03-31", "home": "monkey", "away": "hawks" },
-    { "date": "2026-03-31", "home": "lions", "away": "guardians" },
-    { "date": "2026-04-01", "home": "brothers", "away": "dragon" },
-    { "date": "2026-04-01", "home": "monkey", "away": "hawks" },
-    { "date": "2026-04-01", "home": "lions", "away": "guardians" },
-    { "date": "2026-04-03", "home": "brothers", "away": "lions" },
-    { "date": "2026-04-03", "home": "guardians", "away": "monkey" },
-    { "date": "2026-04-03", "home": "dragon", "away": "hawks" },
-    { "date": "2026-04-04", "home": "brothers", "away": "lions" },
-    { "date": "2026-04-04", "home": "guardians", "away": "monkey" },
-    { "date": "2026-04-04", "home": "dragon", "away": "hawks" },
-    { "date": "2026-04-05", "home": "brothers", "away": "lions" },
-    { "date": "2026-04-05", "home": "guardians", "away": "monkey" },
-    { "date": "2026-04-05", "home": "dragon", "away": "hawks" },
-    { "date": "2026-04-06", "home": "hawks", "away": "lions" },
-    { "date": "2026-04-06", "home": "dragon", "away": "monkey" },
-    { "date": "2026-04-06", "home": "guardians", "away": "brothers" },
-    { "date": "2026-04-07", "home": "hawks", "away": "lions" },
-    { "date": "2026-04-07", "home": "dragon", "away": "monkey" },
-    { "date": "2026-04-07", "home": "guardians", "away": "brothers" },
-    { "date": "2026-04-10", "home": "hawks", "away": "guardians" },
-    { "date": "2026-04-10", "home": "lions", "away": "dragon" },
-    { "date": "2026-04-10", "home": "monkey", "away": "brothers" },
-    { "date": "2026-04-11", "home": "hawks", "away": "guardians" },
-    { "date": "2026-04-11", "home": "lions", "away": "dragon" },
-    { "date": "2026-04-11", "home": "monkey", "away": "brothers" },
-    { "date": "2026-04-12", "home": "hawks", "away": "guardians" },
-    { "date": "2026-04-12", "home": "lions", "away": "dragon" },
-    { "date": "2026-04-12", "home": "monkey", "away": "brothers" },
-    { "date": "2026-04-14", "home": "guardians", "away": "dragon" },
-    { "date": "2026-04-14", "home": "brothers", "away": "hawks" },
-    { "date": "2026-04-15", "home": "guardians", "away": "dragon" },
-    { "date": "2026-04-15", "home": "brothers", "away": "hawks" },
-    { "date": "2026-04-15", "home": "monkey", "away": "lions" },
-    { "date": "2026-04-16", "home": "monkey", "away": "lions" },
-    { "date": "2026-04-17", "home": "guardians", "away": "lions" },
-    { "date": "2026-04-17", "home": "dragon", "away": "brothers" },
-    { "date": "2026-04-17", "home": "hawks", "away": "monkey" },
-    { "date": "2026-04-18", "home": "guardians", "away": "lions" },
-    { "date": "2026-04-18", "home": "dragon", "away": "brothers" },
-    { "date": "2026-04-18", "home": "hawks", "away": "monkey" },
-    { "date": "2026-04-19", "home": "guardians", "away": "lions" },
-    { "date": "2026-04-19", "home": "dragon", "away": "brothers" },
-    { "date": "2026-04-19", "home": "hawks", "away": "monkey" },
-    { "date": "2026-04-21", "home": "lions", "away": "brothers" },
-    { "date": "2026-04-21", "home": "monkey", "away": "guardians" },
-    { "date": "2026-04-22", "home": "lions", "away": "brothers" },
-    { "date": "2026-04-22", "home": "monkey", "away": "guardians" },
-    { "date": "2026-04-22", "home": "hawks", "away": "dragon" },
-    { "date": "2026-04-23", "home": "hawks", "away": "dragon" },
-    { "date": "2026-04-24", "home": "lions", "away": "hawks" },
-    { "date": "2026-04-24", "home": "brothers", "away": "guardians" },
-    { "date": "2026-04-24", "home": "monkey", "away": "dragon" },
-    { "date": "2026-04-25", "home": "lions", "away": "hawks" },
-    { "date": "2026-04-25", "home": "brothers", "away": "guardians" },
-    { "date": "2026-04-25", "home": "monkey", "away": "dragon" },
-    { "date": "2026-04-26", "home": "lions", "away": "hawks" },
-    { "date": "2026-04-26", "home": "brothers", "away": "guardians" },
-    { "date": "2026-04-26", "home": "monkey", "away": "dragon" },
-    { "date": "2026-04-28", "home": "dragon", "away": "lions" },
-    { "date": "2026-04-28", "home": "guardians", "away": "hawks" },
-    { "date": "2026-04-29", "home": "dragon", "away": "lions" },
-    { "date": "2026-04-29", "home": "guardians", "away": "hawks" },
-    { "date": "2026-04-29", "home": "brothers", "away": "monkey" },
-    { "date": "2026-04-30", "home": "brothers", "away": "monkey" },
-    { "date": "2026-05-01", "home": "dragon", "away": "guardians" },
-    { "date": "2026-05-01", "home": "lions", "away": "monkey" },
-    { "date": "2026-05-01", "home": "hawks", "away": "brothers" },
-    { "date": "2026-05-02", "home": "dragon", "away": "guardians" },
-    { "date": "2026-05-02", "home": "lions", "away": "monkey" },
-    { "date": "2026-05-02", "home": "hawks", "away": "brothers" },
-    { "date": "2026-05-03", "home": "dragon", "away": "guardians" },
-    { "date": "2026-05-03", "home": "lions", "away": "monkey" },
-    { "date": "2026-05-03", "home": "hawks", "away": "brothers" },
-    { "date": "2026-05-05", "home": "guardians", "away": "monkey" },
-    { "date": "2026-05-05", "home": "dragon", "away": "brothers" },
-    { "date": "2026-05-06", "home": "guardians", "away": "monkey" },
-    { "date": "2026-05-06", "home": "dragon", "away": "brothers" },
-    { "date": "2026-05-06", "home": "lions", "away": "hawks" },
-    { "date": "2026-05-08", "home": "guardians", "away": "dragon" },
-    { "date": "2026-05-08", "home": "monkey", "away": "lions" },
-    { "date": "2026-05-08", "home": "brothers", "away": "hawks" },
-    { "date": "2026-05-09", "home": "guardians", "away": "dragon" },
-    { "date": "2026-05-09", "home": "monkey", "away": "lions" },
-    { "date": "2026-05-09", "home": "brothers", "away": "hawks" },
-    { "date": "2026-05-10", "home": "guardians", "away": "dragon" },
-    { "date": "2026-05-10", "home": "monkey", "away": "lions" },
-    { "date": "2026-05-10", "home": "brothers", "away": "hawks" },
-    { "date": "2026-05-12", "home": "lions", "away": "dragon" },
-    { "date": "2026-05-13", "home": "lions", "away": "dragon" },
-    { "date": "2026-05-13", "home": "brothers", "away": "guardians" },
-    { "date": "2026-05-13", "home": "hawks", "away": "monkey" },
-    { "date": "2026-05-14", "home": "hawks", "away": "monkey" },
-    { "date": "2026-05-15", "home": "lions", "away": "brothers" },
-    { "date": "2026-05-15", "home": "dragon", "away": "monkey" },
-    { "date": "2026-05-15", "home": "guardians", "away": "hawks" },
-    { "date": "2026-05-16", "home": "lions", "away": "brothers" },
-    { "date": "2026-05-16", "home": "dragon", "away": "monkey" },
-    { "date": "2026-05-16", "home": "guardians", "away": "hawks" },
-    { "date": "2026-05-17", "home": "lions", "away": "brothers" },
-    { "date": "2026-05-17", "home": "dragon", "away": "monkey" },
-    { "date": "2026-05-17", "home": "guardians", "away": "hawks" },
-    { "date": "2026-05-19", "home": "dragon", "away": "hawks" },
-    { "date": "2026-05-20", "home": "monkey", "away": "brothers" },
-    { "date": "2026-05-20", "home": "dragon", "away": "hawks" },
-    { "date": "2026-05-20", "home": "guardians", "away": "lions" },
-    { "date": "2026-05-21", "home": "guardians", "away": "lions" },
-    { "date": "2026-05-22", "home": "monkey", "away": "guardians" },
-    { "date": "2026-05-22", "home": "brothers", "away": "dragon" },
-    { "date": "2026-05-22", "home": "hawks", "away": "lions" },
-    { "date": "2026-05-23", "home": "monkey", "away": "guardians" },
-    { "date": "2026-05-23", "home": "brothers", "away": "dragon" },
-    { "date": "2026-05-23", "home": "hawks", "away": "lions" },
-    { "date": "2026-05-24", "home": "monkey", "away": "guardians" },
-    { "date": "2026-05-24", "home": "brothers", "away": "dragon" },
-    { "date": "2026-05-24", "home": "hawks", "away": "lions" },
-    { "date": "2026-05-26", "home": "dragon", "away": "guardians" },
-    { "date": "2026-05-26", "home": "lions", "away": "monkey" },
-    { "date": "2026-05-27", "home": "dragon", "away": "guardians" },
-    { "date": "2026-05-27", "home": "lions", "away": "monkey" },
-    { "date": "2026-05-27", "home": "hawks", "away": "brothers" },
-    { "date": "2026-05-28", "home": "hawks", "away": "brothers" },
-    { "date": "2026-05-29", "home": "dragon", "away": "lions" },
-    { "date": "2026-05-29", "home": "guardians", "away": "brothers" },
-    { "date": "2026-05-29", "home": "monkey", "away": "hawks" },
-    { "date": "2026-05-30", "home": "dragon", "away": "lions" },
-    { "date": "2026-05-30", "home": "guardians", "away": "brothers" },
-    { "date": "2026-05-30", "home": "monkey", "away": "hawks" },
-    { "date": "2026-05-31", "home": "dragon", "away": "lions" },
-    { "date": "2026-05-31", "home": "guardians", "away": "brothers" },
-    { "date": "2026-05-31", "home": "monkey", "away": "hawks" },
-    { "date": "2026-06-02", "home": "brothers", "away": "lions" },
-    { "date": "2026-06-03", "home": "brothers", "away": "lions" },
-    { "date": "2026-06-03", "home": "monkey", "away": "dragon" },
-    { "date": "2026-06-03", "home": "hawks", "away": "guardians" },
-    { "date": "2026-06-04", "home": "hawks", "away": "guardians" },
-    { "date": "2026-06-05", "home": "brothers", "away": "monkey" },
-    { "date": "2026-06-05", "home": "lions", "away": "guardians" },
-    { "date": "2026-06-05", "home": "hawks", "away": "dragon" },
-    { "date": "2026-06-06", "home": "brothers", "away": "monkey" },
-    { "date": "2026-06-06", "home": "lions", "away": "guardians" },
-    { "date": "2026-06-06", "home": "hawks", "away": "dragon" },
-    { "date": "2026-06-07", "home": "brothers", "away": "monkey" },
-    { "date": "2026-06-07", "home": "lions", "away": "guardians" },
-    { "date": "2026-06-07", "home": "hawks", "away": "dragon" },
-    { "date": "2026-06-09", "home": "guardians", "away": "dragon" },
-    { "date": "2026-06-09", "home": "brothers", "away": "hawks" },
-    { "date": "2026-06-10", "home": "monkey", "away": "lions" },
-    { "date": "2026-06-11", "home": "dragon", "away": "brothers" },
-    { "date": "2026-06-11", "home": "guardians", "away": "lions" },
-    { "date": "2026-06-11", "home": "hawks", "away": "monkey" },
-    { "date": "2026-06-12", "home": "dragon", "away": "brothers" },
-    { "date": "2026-06-12", "home": "guardians", "away": "lions" },
-    { "date": "2026-06-12", "home": "hawks", "away": "monkey" },
-    { "date": "2026-06-13", "home": "dragon", "away": "lions" },
-    { "date": "2026-06-13", "home": "guardians", "away": "hawks" },
-    { "date": "2026-06-13", "home": "brothers", "away": "monkey" },
-    { "date": "2026-06-14", "home": "dragon", "away": "lions" },
-    { "date": "2026-06-14", "home": "guardians", "away": "hawks" },
-    { "date": "2026-06-14", "home": "brothers", "away": "monkey" },
-    { "date": "2026-06-16", "home": "lions", "away": "monkey" },
-    { "date": "2026-06-16", "home": "hawks", "away": "brothers" },
-    { "date": "2026-06-17", "home": "dragon", "away": "guardians" },
-    { "date": "2026-06-18", "home": "lions", "away": "hawks" },
-    { "date": "2026-06-18", "home": "monkey", "away": "dragon" },
-    { "date": "2026-06-18", "home": "brothers", "away": "guardians" },
-    { "date": "2026-06-19", "home": "lions", "away": "hawks" },
-    { "date": "2026-06-19", "home": "monkey", "away": "dragon" },
-    { "date": "2026-06-19", "home": "brothers", "away": "guardians" },
-    { "date": "2026-06-20", "home": "lions", "away": "brothers" },
-    { "date": "2026-06-20", "home": "monkey", "away": "guardians" },
-    { "date": "2026-06-20", "home": "hawks", "away": "dragon" },
-    { "date": "2026-06-21", "home": "lions", "away": "brothers" },
-    { "date": "2026-06-21", "home": "monkey", "away": "guardians" },
-    { "date": "2026-06-21", "home": "hawks", "away": "dragon" },
-    { "date": "2026-07-03", "home": "hawks", "away": "lions" },
-    { "date": "2026-07-03", "home": "dragon", "away": "guardians" },
-    { "date": "2026-07-03", "home": "brothers", "away": "monkey" },
-    { "date": "2026-07-04", "home": "hawks", "away": "lions" },
-    { "date": "2026-07-04", "home": "dragon", "away": "guardians" },
-    { "date": "2026-07-04", "home": "brothers", "away": "monkey" },
-    { "date": "2026-07-05", "home": "hawks", "away": "lions" },
-    { "date": "2026-07-05", "home": "dragon", "away": "guardians" },
-    { "date": "2026-07-05", "home": "brothers", "away": "monkey" },
-    { "date": "2026-07-07", "home": "guardians", "away": "monkey" },
-    { "date": "2026-07-07", "home": "lions", "away": "brothers" },
-    { "date": "2026-07-08", "home": "guardians", "away": "monkey" },
-    { "date": "2026-07-08", "home": "lions", "away": "brothers" },
-    { "date": "2026-07-08", "home": "dragon", "away": "hawks" },
-    { "date": "2026-07-09", "home": "dragon", "away": "hawks" },
-    { "date": "2026-07-10", "home": "guardians", "away": "brothers" },
-    { "date": "2026-07-10", "home": "monkey", "away": "hawks" },
-    { "date": "2026-07-10", "home": "lions", "away": "dragon" },
-    { "date": "2026-07-11", "home": "guardians", "away": "brothers" },
-    { "date": "2026-07-11", "home": "monkey", "away": "hawks" },
-    { "date": "2026-07-11", "home": "lions", "away": "dragon" },
-    { "date": "2026-07-12", "home": "guardians", "away": "brothers" },
-    { "date": "2026-07-12", "home": "monkey", "away": "hawks" },
-    { "date": "2026-07-12", "home": "lions", "away": "dragon" },
-    { "date": "2026-07-14", "home": "brothers", "away": "dragon" },
-    { "date": "2026-07-14", "home": "hawks", "away": "guardians" },
-    { "date": "2026-07-15", "home": "brothers", "away": "dragon" },
-    { "date": "2026-07-15", "home": "hawks", "away": "guardians" },
-    { "date": "2026-07-15", "home": "monkey", "away": "lions" },
-    { "date": "2026-07-16", "home": "monkey", "away": "lions" },
-    { "date": "2026-07-21", "home": "brothers", "away": "hawks" },
-    { "date": "2026-07-21", "home": "dragon", "away": "monkey" },
-    { "date": "2026-07-22", "home": "brothers", "away": "hawks" },
-    { "date": "2026-07-22", "home": "dragon", "away": "monkey" },
-    { "date": "2026-07-22", "home": "lions", "away": "guardians" },
-    { "date": "2026-07-23", "home": "lions", "away": "guardians" },
-    { "date": "2026-07-24", "home": "brothers", "away": "lions" },
-    { "date": "2026-07-24", "home": "hawks", "away": "dragon" },
-    { "date": "2026-07-24", "home": "monkey", "away": "guardians" },
-    { "date": "2026-07-25", "home": "brothers", "away": "lions" },
-    { "date": "2026-07-25", "home": "hawks", "away": "dragon" },
-    { "date": "2026-07-25", "home": "monkey", "away": "guardians" },
-    { "date": "2026-07-26", "home": "brothers", "away": "lions" },
-    { "date": "2026-07-26", "home": "hawks", "away": "dragon" },
-    { "date": "2026-07-26", "home": "monkey", "away": "guardians" },
-    { "date": "2026-07-28", "home": "guardians", "away": "dragon" },
-    { "date": "2026-07-28", "home": "lions", "away": "hawks" },
-    { "date": "2026-07-29", "home": "guardians", "away": "dragon" },
-    { "date": "2026-07-29", "home": "lions", "away": "hawks" },
-    { "date": "2026-07-29", "home": "monkey", "away": "brothers" },
-    { "date": "2026-07-30", "home": "monkey", "away": "brothers" },
-    { "date": "2026-07-31", "home": "guardians", "away": "hawks" },
-    { "date": "2026-07-31", "home": "dragon", "away": "brothers" },
-    { "date": "2026-07-31", "home": "lions", "away": "monkey" },
-    { "date": "2026-08-01", "home": "guardians", "away": "hawks" },
-    { "date": "2026-08-01", "home": "dragon", "away": "brothers" },
-    { "date": "2026-08-01", "home": "lions", "away": "monkey" },
-    { "date": "2026-08-02", "home": "guardians", "away": "hawks" },
-    { "date": "2026-08-02", "home": "dragon", "away": "brothers" },
-    { "date": "2026-08-02", "home": "lions", "away": "monkey" },
-    { "date": "2026-08-04", "home": "hawks", "away": "monkey" },
-    { "date": "2026-08-04", "home": "brothers", "away": "guardians" },
-    { "date": "2026-08-05", "home": "hawks", "away": "monkey" },
-    { "date": "2026-08-05", "home": "brothers", "away": "guardians" },
-    { "date": "2026-08-05", "home": "dragon", "away": "lions" },
-    { "date": "2026-08-06", "home": "dragon", "away": "lions" },
-    { "date": "2026-08-07", "home": "hawks", "away": "brothers" },
-    { "date": "2026-08-07", "home": "monkey", "away": "dragon" },
-    { "date": "2026-08-07", "home": "guardians", "away": "lions" },
-    { "date": "2026-08-08", "home": "hawks", "away": "brothers" },
-    { "date": "2026-08-08", "home": "monkey", "away": "dragon" },
-    { "date": "2026-08-08", "home": "guardians", "away": "lions" },
-    { "date": "2026-08-09", "home": "hawks", "away": "brothers" },
-    { "date": "2026-08-09", "home": "monkey", "away": "dragon" },
-    { "date": "2026-08-09", "home": "guardians", "away": "lions" },
-    { "date": "2026-08-11", "home": "lions", "away": "monkey" },
-    { "date": "2026-08-11", "home": "hawks", "away": "dragon" },
-    { "date": "2026-08-12", "home": "lions", "away": "monkey" },
-    { "date": "2026-08-12", "home": "hawks", "away": "dragon" },
-    { "date": "2026-08-12", "home": "guardians", "away": "brothers" },
-    { "date": "2026-08-13", "home": "guardians", "away": "brothers" },
-    { "date": "2026-08-14", "home": "lions", "away": "guardians" },
-    { "date": "2026-08-14", "home": "dragon", "away": "monkey" },
-    { "date": "2026-08-14", "home": "brothers", "away": "hawks" },
-    { "date": "2026-08-15", "home": "lions", "away": "guardians" },
-    { "date": "2026-08-15", "home": "dragon", "away": "monkey" },
-    { "date": "2026-08-15", "home": "brothers", "away": "hawks" },
-    { "date": "2026-08-16", "home": "lions", "away": "guardians" },
-    { "date": "2026-08-16", "home": "dragon", "away": "monkey" },
-    { "date": "2026-08-16", "home": "brothers", "away": "hawks" },
-    { "date": "2026-08-18", "home": "hawks", "away": "lions" },
-    { "date": "2026-08-18", "home": "monkey", "away": "guardians" },
-    { "date": "2026-08-19", "home": "hawks", "away": "lions" },
-    { "date": "2026-08-19", "home": "monkey", "away": "guardians" },
-    { "date": "2026-08-19", "home": "dragon", "away": "brothers" },
-    { "date": "2026-08-20", "home": "dragon", "away": "brothers" },
-    { "date": "2026-08-21", "home": "hawks", "away": "monkey" },
-    { "date": "2026-08-21", "home": "lions", "away": "brothers" },
-    { "date": "2026-08-21", "home": "guardians", "away": "dragon" },
-    { "date": "2026-08-22", "home": "hawks", "away": "monkey" },
-    { "date": "2026-08-22", "home": "lions", "away": "brothers" },
-    { "date": "2026-08-22", "home": "guardians", "away": "dragon" },
-    { "date": "2026-08-23", "home": "hawks", "away": "monkey" },
-    { "date": "2026-08-23", "home": "lions", "away": "brothers" },
-    { "date": "2026-08-23", "home": "guardians", "away": "dragon" },
-    { "date": "2026-08-25", "home": "brothers", "away": "monkey" },
-    { "date": "2026-08-25", "home": "lions", "away": "dragon" },
-    { "date": "2026-08-26", "home": "brothers", "away": "monkey" },
-    { "date": "2026-08-26", "home": "lions", "away": "dragon" },
-    { "date": "2026-08-26", "home": "guardians", "away": "hawks" },
-    { "date": "2026-08-27", "home": "guardians", "away": "hawks" },
-    { "date": "2026-08-28", "home": "brothers", "away": "guardians" },
-    { "date": "2026-08-28", "home": "monkey", "away": "lions" },
-    { "date": "2026-08-28", "home": "dragon", "away": "hawks" },
-    { "date": "2026-08-29", "home": "brothers", "away": "guardians" },
-    { "date": "2026-08-29", "home": "monkey", "away": "lions" },
-    { "date": "2026-08-29", "home": "dragon", "away": "hawks" },
-    { "date": "2026-08-30", "home": "brothers", "away": "guardians" },
-    { "date": "2026-08-30", "home": "monkey", "away": "lions" },
-    { "date": "2026-08-30", "home": "dragon", "away": "hawks" },
-    { "date": "2026-09-01", "home": "guardians", "away": "lions" },
-    { "date": "2026-09-01", "home": "hawks", "away": "brothers" },
-    { "date": "2026-09-02", "home": "guardians", "away": "lions" },
-    { "date": "2026-09-02", "home": "hawks", "away": "brothers" },
-    { "date": "2026-09-02", "home": "monkey", "away": "dragon" },
-    { "date": "2026-09-03", "home": "monkey", "away": "dragon" },
-    { "date": "2026-09-04", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-04", "home": "lions", "away": "hawks" },
-    { "date": "2026-09-04", "home": "brothers", "away": "dragon" },
-    { "date": "2026-09-05", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-05", "home": "lions", "away": "hawks" },
-    { "date": "2026-09-05", "home": "brothers", "away": "dragon" },
-    { "date": "2026-09-06", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-06", "home": "lions", "away": "hawks" },
-    { "date": "2026-09-06", "home": "brothers", "away": "dragon" },
-    { "date": "2026-09-08", "home": "dragon", "away": "guardians" },
-    { "date": "2026-09-08", "home": "monkey", "away": "hawks" },
-    { "date": "2026-09-09", "home": "dragon", "away": "guardians" },
-    { "date": "2026-09-09", "home": "monkey", "away": "hawks" },
-    { "date": "2026-09-09", "home": "brothers", "away": "lions" },
-    { "date": "2026-09-10", "home": "brothers", "away": "lions" },
-    { "date": "2026-09-11", "home": "dragon", "away": "lions" },
-    { "date": "2026-09-11", "home": "monkey", "away": "brothers" },
-    { "date": "2026-09-11", "home": "hawks", "away": "guardians" },
-    { "date": "2026-09-12", "home": "dragon", "away": "lions" },
-    { "date": "2026-09-12", "home": "monkey", "away": "brothers" },
-    { "date": "2026-09-12", "home": "hawks", "away": "guardians" },
-    { "date": "2026-09-13", "home": "dragon", "away": "lions" },
-    { "date": "2026-09-13", "home": "monkey", "away": "brothers" },
-    { "date": "2026-09-13", "home": "hawks", "away": "guardians" },
-    { "date": "2026-09-15", "home": "hawks", "away": "brothers" },
-    { "date": "2026-09-15", "home": "lions", "away": "monkey" },
-    { "date": "2026-09-16", "home": "dragon", "away": "guardians" },
-    { "date": "2026-09-17", "home": "brothers", "away": "lions" },
-    { "date": "2026-09-17", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-17", "home": "dragon", "away": "hawks" },
-    { "date": "2026-09-18", "home": "brothers", "away": "lions" },
-    { "date": "2026-09-18", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-18", "home": "dragon", "away": "hawks" },
-    { "date": "2026-09-19", "home": "brothers", "away": "dragon" },
-    { "date": "2026-09-19", "home": "monkey", "away": "hawks" },
-    { "date": "2026-09-19", "home": "lions", "away": "guardians" },
-    { "date": "2026-09-20", "home": "brothers", "away": "dragon" },
-    { "date": "2026-09-20", "home": "monkey", "away": "hawks" },
-    { "date": "2026-09-20", "home": "lions", "away": "guardians" },
-    { "date": "2026-09-24", "home": "hawks", "away": "guardians" },
-    { "date": "2026-09-24", "home": "monkey", "away": "brothers" },
-    { "date": "2026-09-24", "home": "lions", "away": "dragon" },
-    { "date": "2026-09-25", "home": "hawks", "away": "guardians" },
-    { "date": "2026-09-25", "home": "monkey", "away": "brothers" },
-    { "date": "2026-09-25", "home": "lions", "away": "dragon" },
-    { "date": "2026-09-26", "home": "hawks", "away": "lions" },
-    { "date": "2026-09-26", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-26", "home": "dragon", "away": "brothers" },
-    { "date": "2026-09-27", "home": "hawks", "away": "lions" },
-    { "date": "2026-09-27", "home": "guardians", "away": "monkey" },
-    { "date": "2026-09-27", "home": "dragon", "away": "brothers" },
-    { "date": "2026-09-28", "home": "brothers", "away": "hawks" },
-    { "date": "2026-09-28", "home": "monkey", "away": "lions" },
-    { "date": "2026-09-28", "home": "guardians", "away": "dragon" }
-  ]
-};
+    <style>
+        body { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; background-color: #f9fafb; }
+        /* Hide scrollbar for clean UI in cards */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-const TEAMS = {
-  dragon: {
-    id: 'dragon',
-    full: '味全龍',
-    short: '味全',
-    shortest: '龍',
-    color: '#EE1C25', 
-    emoji: '🐲',
-    textColor: 'white'
-  },
-  lions: {
-    id: 'lions',
-    full: '統一獅',
-    short: '統一',
-    shortest: '獅',
-    color: '#f37021',
-    emoji: '🦁',
-    textColor: 'white'
-  },
-  brothers: {
-    id: 'brothers',
-    full: '中信兄弟象',
-    short: '中信',
-    shortest: '象',
-    color: '#ffcd00',
-    emoji: '🐘',
-    textColor: 'black'
-  },
-  monkey: {
-    id: 'monkey',
-    full: '樂天桃猿',
-    short: '樂天',
-    shortest: '猿',
-    color: '#8B0000', 
-    emoji: '🐒',
-    textColor: 'white'
-  },
-  guardians: {
-    id: 'guardians',
-    full: '富邦悍將',
-    short: '富邦',
-    shortest: '悍',
-    color: '#004a9c',
-    emoji: '🛡️',
-    textColor: 'white'
-  },
-  hawks: {
-    id: 'hawks',
-    full: '台鋼雄鷹',
-    short: '台鋼',
-    shortest: '鷹',
-    color: '#006241',
-    emoji: '🦅',
-    textColor: 'white'
-  }
-};
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-const TEAM_KEYS = Object.keys(TEAMS);
+        // --- ICONS (Inline SVGs replacement for lucide-react) ---
+        const IconInfo = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        );
+        const IconCalendar = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        );
+        const IconAlertTriangle = ({ className, size }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        );
 
-// --- HELPER FUNCTIONS ---
+        // --- DATA ---
+        const RAW_DATA = {
+            "holidays": {
+                "2026-01-01": "元旦",
+                "2026-02-14": "春節", "2026-02-15": "春節", "2026-02-16": "春節", "2026-02-17": "春節", 
+                "2026-02-18": "春節", "2026-02-19": "春節", "2026-02-20": "春節", "2026-02-21": "春節", "2026-02-22": "春節",
+                "2026-02-27": "228連假", "2026-02-28": "228和平紀念日", "2026-03-01": "228連假",
+                "2026-03-28": "開幕戰",
+                "2026-04-03": "清明連假", "2026-04-04": "兒童節", "2026-04-05": "清明節", "2026-04-06": "清明連假",
+                "2026-05-01": "勞動節", "2026-05-02": "連假", "2026-05-03": "連假",
+                "2026-06-19": "端午節", "2026-06-20": "連假", "2026-06-21": "連假",
+                "2026-09-25": "中秋節", "2026-09-26": "連假", "2026-09-27": "連假", "2026-09-28": "教師節",
+                "2026-10-09": "國慶連假", "2026-10-10": "國慶日", "2026-10-11": "國慶連假",
+                "2026-10-24": "光復連假", "2026-10-25": "光復節", "2026-10-26": "補假",
+                "2026-12-25": "行憲紀念日", "2026-12-26": "連假", "2026-12-27": "連假"
+            },
+            "specialEvents": [
+                { start: "2026-06-23", end: "2026-06-28", name: "補賽預備日", type: "light" },
+                { start: "2026-06-29", end: "2026-06-30", name: "上半季補賽周", type: "light" },
+                { start: "2026-07-01", end: "2026-07-01", name: "上半季加賽保留日", type: "light" },
+                { start: "2026-09-22", end: "2026-09-22", name: "下半季優先補賽日", type: "light" },
+                { start: "2026-09-29", end: "2026-10-04", name: "補賽預備日", type: "light" },
+                { start: "2026-10-05", end: "2026-10-06", name: "下半季補賽周", type: "light" },
+                { start: "2026-10-07", end: "2026-10-07", name: "上半季加賽保留日", type: "light" }, 
+                { start: "2026-07-18", end: "2026-07-19", name: "明星賽", type: "dark" },
+                { start: "2026-10-09", end: "2026-10-13", name: "季後挑戰賽預定", type: "dark" },
+                { start: "2026-10-17", end: "2026-10-25", name: "總冠軍賽預定", type: "dark" },
+            ],
+            "matches": [
+                { "date": "2026-03-28", "home": "monkey", "away": "brothers" },
+                { "date": "2026-03-29", "home": "monkey", "away": "dragon" },
+                { "date": "2026-03-29", "home": "brothers", "away": "guardians" },
+                { "date": "2026-03-29", "home": "lions", "away": "hawks" },
+                { "date": "2026-03-31", "home": "brothers", "away": "dragon" },
+                { "date": "2026-03-31", "home": "monkey", "away": "hawks" },
+                { "date": "2026-03-31", "home": "lions", "away": "guardians" },
+                { "date": "2026-04-01", "home": "brothers", "away": "dragon" },
+                { "date": "2026-04-01", "home": "monkey", "away": "hawks" },
+                { "date": "2026-04-01", "home": "lions", "away": "guardians" },
+                { "date": "2026-04-03", "home": "brothers", "away": "lions" },
+                { "date": "2026-04-03", "home": "guardians", "away": "monkey" },
+                { "date": "2026-04-03", "home": "dragon", "away": "hawks" },
+                { "date": "2026-04-04", "home": "brothers", "away": "lions" },
+                { "date": "2026-04-04", "home": "guardians", "away": "monkey" },
+                { "date": "2026-04-04", "home": "dragon", "away": "hawks" },
+                { "date": "2026-04-05", "home": "brothers", "away": "lions" },
+                { "date": "2026-04-05", "home": "guardians", "away": "monkey" },
+                { "date": "2026-04-05", "home": "dragon", "away": "hawks" },
+                { "date": "2026-04-06", "home": "hawks", "away": "lions" },
+                { "date": "2026-04-06", "home": "dragon", "away": "monkey" },
+                { "date": "2026-04-06", "home": "guardians", "away": "brothers" },
+                { "date": "2026-04-07", "home": "hawks", "away": "lions" },
+                { "date": "2026-04-07", "home": "dragon", "away": "monkey" },
+                { "date": "2026-04-07", "home": "guardians", "away": "brothers" },
+                { "date": "2026-04-10", "home": "hawks", "away": "guardians" },
+                { "date": "2026-04-10", "home": "lions", "away": "dragon" },
+                { "date": "2026-04-10", "home": "monkey", "away": "brothers" },
+                { "date": "2026-04-11", "home": "hawks", "away": "guardians" },
+                { "date": "2026-04-11", "home": "lions", "away": "dragon" },
+                { "date": "2026-04-11", "home": "monkey", "away": "brothers" },
+                { "date": "2026-04-12", "home": "hawks", "away": "guardians" },
+                { "date": "2026-04-12", "home": "lions", "away": "dragon" },
+                { "date": "2026-04-12", "home": "monkey", "away": "brothers" },
+                { "date": "2026-04-14", "home": "guardians", "away": "dragon" },
+                { "date": "2026-04-14", "home": "brothers", "away": "hawks" },
+                { "date": "2026-04-15", "home": "guardians", "away": "dragon" },
+                { "date": "2026-04-15", "home": "brothers", "away": "hawks" },
+                { "date": "2026-04-15", "home": "monkey", "away": "lions" },
+                { "date": "2026-04-16", "home": "monkey", "away": "lions" },
+                { "date": "2026-04-17", "home": "guardians", "away": "lions" },
+                { "date": "2026-04-17", "home": "dragon", "away": "brothers" },
+                { "date": "2026-04-17", "home": "hawks", "away": "monkey" },
+                { "date": "2026-04-18", "home": "guardians", "away": "lions" },
+                { "date": "2026-04-18", "home": "dragon", "away": "brothers" },
+                { "date": "2026-04-18", "home": "hawks", "away": "monkey" },
+                { "date": "2026-04-19", "home": "guardians", "away": "lions" },
+                { "date": "2026-04-19", "home": "dragon", "away": "brothers" },
+                { "date": "2026-04-19", "home": "hawks", "away": "monkey" },
+                { "date": "2026-04-21", "home": "lions", "away": "brothers" },
+                { "date": "2026-04-21", "home": "monkey", "away": "guardians" },
+                { "date": "2026-04-22", "home": "lions", "away": "brothers" },
+                { "date": "2026-04-22", "home": "monkey", "away": "guardians" },
+                { "date": "2026-04-22", "home": "hawks", "away": "dragon" },
+                { "date": "2026-04-23", "home": "hawks", "away": "dragon" },
+                { "date": "2026-04-24", "home": "lions", "away": "hawks" },
+                { "date": "2026-04-24", "home": "brothers", "away": "guardians" },
+                { "date": "2026-04-24", "home": "monkey", "away": "dragon" },
+                { "date": "2026-04-25", "home": "lions", "away": "hawks" },
+                { "date": "2026-04-25", "home": "brothers", "away": "guardians" },
+                { "date": "2026-04-25", "home": "monkey", "away": "dragon" },
+                { "date": "2026-04-26", "home": "lions", "away": "hawks" },
+                { "date": "2026-04-26", "home": "brothers", "away": "guardians" },
+                { "date": "2026-04-26", "home": "monkey", "away": "dragon" },
+                { "date": "2026-04-28", "home": "dragon", "away": "lions" },
+                { "date": "2026-04-28", "home": "guardians", "away": "hawks" },
+                { "date": "2026-04-29", "home": "dragon", "away": "lions" },
+                { "date": "2026-04-29", "home": "guardians", "away": "hawks" },
+                { "date": "2026-04-29", "home": "brothers", "away": "monkey" },
+                { "date": "2026-04-30", "home": "brothers", "away": "monkey" },
+                { "date": "2026-05-01", "home": "dragon", "away": "guardians" },
+                { "date": "2026-05-01", "home": "lions", "away": "monkey" },
+                { "date": "2026-05-01", "home": "hawks", "away": "brothers" },
+                { "date": "2026-05-02", "home": "dragon", "away": "guardians" },
+                { "date": "2026-05-02", "home": "lions", "away": "monkey" },
+                { "date": "2026-05-02", "home": "hawks", "away": "brothers" },
+                { "date": "2026-05-03", "home": "dragon", "away": "guardians" },
+                { "date": "2026-05-03", "home": "lions", "away": "monkey" },
+                { "date": "2026-05-03", "home": "hawks", "away": "brothers" },
+                { "date": "2026-05-05", "home": "guardians", "away": "monkey" },
+                { "date": "2026-05-05", "home": "dragon", "away": "brothers" },
+                { "date": "2026-05-06", "home": "guardians", "away": "monkey" },
+                { "date": "2026-05-06", "home": "dragon", "away": "brothers" },
+                { "date": "2026-05-06", "home": "lions", "away": "hawks" },
+                { "date": "2026-05-08", "home": "guardians", "away": "dragon" },
+                { "date": "2026-05-08", "home": "monkey", "away": "lions" },
+                { "date": "2026-05-08", "home": "brothers", "away": "hawks" },
+                { "date": "2026-05-09", "home": "guardians", "away": "dragon" },
+                { "date": "2026-05-09", "home": "monkey", "away": "lions" },
+                { "date": "2026-05-09", "home": "brothers", "away": "hawks" },
+                { "date": "2026-05-10", "home": "guardians", "away": "dragon" },
+                { "date": "2026-05-10", "home": "monkey", "away": "lions" },
+                { "date": "2026-05-10", "home": "brothers", "away": "hawks" },
+                { "date": "2026-05-12", "home": "lions", "away": "dragon" },
+                { "date": "2026-05-13", "home": "lions", "away": "dragon" },
+                { "date": "2026-05-13", "home": "brothers", "away": "guardians" },
+                { "date": "2026-05-13", "home": "hawks", "away": "monkey" },
+                { "date": "2026-05-14", "home": "hawks", "away": "monkey" },
+                { "date": "2026-05-15", "home": "lions", "away": "brothers" },
+                { "date": "2026-05-15", "home": "dragon", "away": "monkey" },
+                { "date": "2026-05-15", "home": "guardians", "away": "hawks" },
+                { "date": "2026-05-16", "home": "lions", "away": "brothers" },
+                { "date": "2026-05-16", "home": "dragon", "away": "monkey" },
+                { "date": "2026-05-16", "home": "guardians", "away": "hawks" },
+                { "date": "2026-05-17", "home": "lions", "away": "brothers" },
+                { "date": "2026-05-17", "home": "dragon", "away": "monkey" },
+                { "date": "2026-05-17", "home": "guardians", "away": "hawks" },
+                { "date": "2026-05-19", "home": "dragon", "away": "hawks" },
+                { "date": "2026-05-20", "home": "monkey", "away": "brothers" },
+                { "date": "2026-05-20", "home": "dragon", "away": "hawks" },
+                { "date": "2026-05-20", "home": "guardians", "away": "lions" },
+                { "date": "2026-05-21", "home": "guardians", "away": "lions" },
+                { "date": "2026-05-22", "home": "monkey", "away": "guardians" },
+                { "date": "2026-05-22", "home": "brothers", "away": "dragon" },
+                { "date": "2026-05-22", "home": "hawks", "away": "lions" },
+                { "date": "2026-05-23", "home": "monkey", "away": "guardians" },
+                { "date": "2026-05-23", "home": "brothers", "away": "dragon" },
+                { "date": "2026-05-23", "home": "hawks", "away": "lions" },
+                { "date": "2026-05-24", "home": "monkey", "away": "guardians" },
+                { "date": "2026-05-24", "home": "brothers", "away": "dragon" },
+                { "date": "2026-05-24", "home": "hawks", "away": "lions" },
+                { "date": "2026-05-26", "home": "dragon", "away": "guardians" },
+                { "date": "2026-05-26", "home": "lions", "away": "monkey" },
+                { "date": "2026-05-27", "home": "dragon", "away": "guardians" },
+                { "date": "2026-05-27", "home": "lions", "away": "monkey" },
+                { "date": "2026-05-27", "home": "hawks", "away": "brothers" },
+                { "date": "2026-05-28", "home": "hawks", "away": "brothers" },
+                { "date": "2026-05-29", "home": "dragon", "away": "lions" },
+                { "date": "2026-05-29", "home": "guardians", "away": "brothers" },
+                { "date": "2026-05-29", "home": "monkey", "away": "hawks" },
+                { "date": "2026-05-30", "home": "dragon", "away": "lions" },
+                { "date": "2026-05-30", "home": "guardians", "away": "brothers" },
+                { "date": "2026-05-30", "home": "monkey", "away": "hawks" },
+                { "date": "2026-05-31", "home": "dragon", "away": "lions" },
+                { "date": "2026-05-31", "home": "guardians", "away": "brothers" },
+                { "date": "2026-05-31", "home": "monkey", "away": "hawks" },
+                { "date": "2026-06-02", "home": "brothers", "away": "lions" },
+                { "date": "2026-06-03", "home": "brothers", "away": "lions" },
+                { "date": "2026-06-03", "home": "monkey", "away": "dragon" },
+                { "date": "2026-06-03", "home": "hawks", "away": "guardians" },
+                { "date": "2026-06-04", "home": "hawks", "away": "guardians" },
+                { "date": "2026-06-05", "home": "brothers", "away": "monkey" },
+                { "date": "2026-06-05", "home": "lions", "away": "guardians" },
+                { "date": "2026-06-05", "home": "hawks", "away": "dragon" },
+                { "date": "2026-06-06", "home": "brothers", "away": "monkey" },
+                { "date": "2026-06-06", "home": "lions", "away": "guardians" },
+                { "date": "2026-06-06", "home": "hawks", "away": "dragon" },
+                { "date": "2026-06-07", "home": "brothers", "away": "monkey" },
+                { "date": "2026-06-07", "home": "lions", "away": "guardians" },
+                { "date": "2026-06-07", "home": "hawks", "away": "dragon" },
+                { "date": "2026-06-09", "home": "guardians", "away": "dragon" },
+                { "date": "2026-06-09", "home": "brothers", "away": "hawks" },
+                { "date": "2026-06-10", "home": "monkey", "away": "lions" },
+                { "date": "2026-06-11", "home": "dragon", "away": "brothers" },
+                { "date": "2026-06-11", "home": "guardians", "away": "lions" },
+                { "date": "2026-06-11", "home": "hawks", "away": "monkey" },
+                { "date": "2026-06-12", "home": "dragon", "away": "brothers" },
+                { "date": "2026-06-12", "home": "guardians", "away": "lions" },
+                { "date": "2026-06-12", "home": "hawks", "away": "monkey" },
+                { "date": "2026-06-13", "home": "dragon", "away": "lions" },
+                { "date": "2026-06-13", "home": "guardians", "away": "hawks" },
+                { "date": "2026-06-13", "home": "brothers", "away": "monkey" },
+                { "date": "2026-06-14", "home": "dragon", "away": "lions" },
+                { "date": "2026-06-14", "home": "guardians", "away": "hawks" },
+                { "date": "2026-06-14", "home": "brothers", "away": "monkey" },
+                { "date": "2026-06-16", "home": "lions", "away": "monkey" },
+                { "date": "2026-06-16", "home": "hawks", "away": "brothers" },
+                { "date": "2026-06-17", "home": "dragon", "away": "guardians" },
+                { "date": "2026-06-18", "home": "lions", "away": "hawks" },
+                { "date": "2026-06-18", "home": "monkey", "away": "dragon" },
+                { "date": "2026-06-18", "home": "brothers", "away": "guardians" },
+                { "date": "2026-06-19", "home": "lions", "away": "hawks" },
+                { "date": "2026-06-19", "home": "monkey", "away": "dragon" },
+                { "date": "2026-06-19", "home": "brothers", "away": "guardians" },
+                { "date": "2026-06-20", "home": "lions", "away": "brothers" },
+                { "date": "2026-06-20", "home": "monkey", "away": "guardians" },
+                { "date": "2026-06-20", "home": "hawks", "away": "dragon" },
+                { "date": "2026-06-21", "home": "lions", "away": "brothers" },
+                { "date": "2026-06-21", "home": "monkey", "away": "guardians" },
+                { "date": "2026-06-21", "home": "hawks", "away": "dragon" },
+                { "date": "2026-07-03", "home": "hawks", "away": "lions" },
+                { "date": "2026-07-03", "home": "dragon", "away": "guardians" },
+                { "date": "2026-07-03", "home": "brothers", "away": "monkey" },
+                { "date": "2026-07-04", "home": "hawks", "away": "lions" },
+                { "date": "2026-07-04", "home": "dragon", "away": "guardians" },
+                { "date": "2026-07-04", "home": "brothers", "away": "monkey" },
+                { "date": "2026-07-05", "home": "hawks", "away": "lions" },
+                { "date": "2026-07-05", "home": "dragon", "away": "guardians" },
+                { "date": "2026-07-05", "home": "brothers", "away": "monkey" },
+                { "date": "2026-07-07", "home": "guardians", "away": "monkey" },
+                { "date": "2026-07-07", "home": "lions", "away": "brothers" },
+                { "date": "2026-07-08", "home": "guardians", "away": "monkey" },
+                { "date": "2026-07-08", "home": "lions", "away": "brothers" },
+                { "date": "2026-07-08", "home": "dragon", "away": "hawks" },
+                { "date": "2026-07-09", "home": "dragon", "away": "hawks" },
+                { "date": "2026-07-10", "home": "guardians", "away": "brothers" },
+                { "date": "2026-07-10", "home": "monkey", "away": "hawks" },
+                { "date": "2026-07-10", "home": "lions", "away": "dragon" },
+                { "date": "2026-07-11", "home": "guardians", "away": "brothers" },
+                { "date": "2026-07-11", "home": "monkey", "away": "hawks" },
+                { "date": "2026-07-11", "home": "lions", "away": "dragon" },
+                { "date": "2026-07-12", "home": "guardians", "away": "brothers" },
+                { "date": "2026-07-12", "home": "monkey", "away": "hawks" },
+                { "date": "2026-07-12", "home": "lions", "away": "dragon" },
+                { "date": "2026-07-14", "home": "brothers", "away": "dragon" },
+                { "date": "2026-07-14", "home": "hawks", "away": "guardians" },
+                { "date": "2026-07-15", "home": "brothers", "away": "dragon" },
+                { "date": "2026-07-15", "home": "hawks", "away": "guardians" },
+                { "date": "2026-07-15", "home": "monkey", "away": "lions" },
+                { "date": "2026-07-16", "home": "monkey", "away": "lions" },
+                { "date": "2026-07-21", "home": "brothers", "away": "hawks" },
+                { "date": "2026-07-21", "home": "dragon", "away": "monkey" },
+                { "date": "2026-07-22", "home": "brothers", "away": "hawks" },
+                { "date": "2026-07-22", "home": "dragon", "away": "monkey" },
+                { "date": "2026-07-22", "home": "lions", "away": "guardians" },
+                { "date": "2026-07-23", "home": "lions", "away": "guardians" },
+                { "date": "2026-07-24", "home": "brothers", "away": "lions" },
+                { "date": "2026-07-24", "home": "hawks", "away": "dragon" },
+                { "date": "2026-07-24", "home": "monkey", "away": "guardians" },
+                { "date": "2026-07-25", "home": "brothers", "away": "lions" },
+                { "date": "2026-07-25", "home": "hawks", "away": "dragon" },
+                { "date": "2026-07-25", "home": "monkey", "away": "guardians" },
+                { "date": "2026-07-26", "home": "brothers", "away": "lions" },
+                { "date": "2026-07-26", "home": "hawks", "away": "dragon" },
+                { "date": "2026-07-26", "home": "monkey", "away": "guardians" },
+                { "date": "2026-07-28", "home": "guardians", "away": "dragon" },
+                { "date": "2026-07-28", "home": "lions", "away": "hawks" },
+                { "date": "2026-07-29", "home": "guardians", "away": "dragon" },
+                { "date": "2026-07-29", "home": "lions", "away": "hawks" },
+                { "date": "2026-07-29", "home": "monkey", "away": "brothers" },
+                { "date": "2026-07-30", "home": "monkey", "away": "brothers" },
+                { "date": "2026-07-31", "home": "guardians", "away": "hawks" },
+                { "date": "2026-07-31", "home": "dragon", "away": "brothers" },
+                { "date": "2026-07-31", "home": "lions", "away": "monkey" },
+                { "date": "2026-08-01", "home": "guardians", "away": "hawks" },
+                { "date": "2026-08-01", "home": "dragon", "away": "brothers" },
+                { "date": "2026-08-01", "home": "lions", "away": "monkey" },
+                { "date": "2026-08-02", "home": "guardians", "away": "hawks" },
+                { "date": "2026-08-02", "home": "dragon", "away": "brothers" },
+                { "date": "2026-08-02", "home": "lions", "away": "monkey" },
+                { "date": "2026-08-04", "home": "hawks", "away": "monkey" },
+                { "date": "2026-08-04", "home": "brothers", "away": "guardians" },
+                { "date": "2026-08-05", "home": "hawks", "away": "monkey" },
+                { "date": "2026-08-05", "home": "brothers", "away": "guardians" },
+                { "date": "2026-08-05", "home": "dragon", "away": "lions" },
+                { "date": "2026-08-06", "home": "dragon", "away": "lions" },
+                { "date": "2026-08-07", "home": "hawks", "away": "brothers" },
+                { "date": "2026-08-07", "home": "monkey", "away": "dragon" },
+                { "date": "2026-08-07", "home": "guardians", "away": "lions" },
+                { "date": "2026-08-08", "home": "hawks", "away": "brothers" },
+                { "date": "2026-08-08", "home": "monkey", "away": "dragon" },
+                { "date": "2026-08-08", "home": "guardians", "away": "lions" },
+                { "date": "2026-08-09", "home": "hawks", "away": "brothers" },
+                { "date": "2026-08-09", "home": "monkey", "away": "dragon" },
+                { "date": "2026-08-09", "home": "guardians", "away": "lions" },
+                { "date": "2026-08-11", "home": "lions", "away": "monkey" },
+                { "date": "2026-08-11", "home": "hawks", "away": "dragon" },
+                { "date": "2026-08-12", "home": "lions", "away": "monkey" },
+                { "date": "2026-08-12", "home": "hawks", "away": "dragon" },
+                { "date": "2026-08-12", "home": "guardians", "away": "brothers" },
+                { "date": "2026-08-13", "home": "guardians", "away": "brothers" },
+                { "date": "2026-08-14", "home": "lions", "away": "guardians" },
+                { "date": "2026-08-14", "home": "dragon", "away": "monkey" },
+                { "date": "2026-08-14", "home": "brothers", "away": "hawks" },
+                { "date": "2026-08-15", "home": "lions", "away": "guardians" },
+                { "date": "2026-08-15", "home": "dragon", "away": "monkey" },
+                { "date": "2026-08-15", "home": "brothers", "away": "hawks" },
+                { "date": "2026-08-16", "home": "lions", "away": "guardians" },
+                { "date": "2026-08-16", "home": "dragon", "away": "monkey" },
+                { "date": "2026-08-16", "home": "brothers", "away": "hawks" },
+                { "date": "2026-08-18", "home": "hawks", "away": "lions" },
+                { "date": "2026-08-18", "home": "monkey", "away": "guardians" },
+                { "date": "2026-08-19", "home": "hawks", "away": "lions" },
+                { "date": "2026-08-19", "home": "monkey", "away": "guardians" },
+                { "date": "2026-08-19", "home": "dragon", "away": "brothers" },
+                { "date": "2026-08-20", "home": "dragon", "away": "brothers" },
+                { "date": "2026-08-21", "home": "hawks", "away": "monkey" },
+                { "date": "2026-08-21", "home": "lions", "away": "brothers" },
+                { "date": "2026-08-21", "home": "guardians", "away": "dragon" },
+                { "date": "2026-08-22", "home": "hawks", "away": "monkey" },
+                { "date": "2026-08-22", "home": "lions", "away": "brothers" },
+                { "date": "2026-08-22", "home": "guardians", "away": "dragon" },
+                { "date": "2026-08-23", "home": "hawks", "away": "monkey" },
+                { "date": "2026-08-23", "home": "lions", "away": "brothers" },
+                { "date": "2026-08-23", "home": "guardians", "away": "dragon" },
+                { "date": "2026-08-25", "home": "brothers", "away": "monkey" },
+                { "date": "2026-08-25", "home": "lions", "away": "dragon" },
+                { "date": "2026-08-26", "home": "brothers", "away": "monkey" },
+                { "date": "2026-08-26", "home": "lions", "away": "dragon" },
+                { "date": "2026-08-26", "home": "guardians", "away": "hawks" },
+                { "date": "2026-08-27", "home": "guardians", "away": "hawks" },
+                { "date": "2026-08-28", "home": "brothers", "away": "guardians" },
+                { "date": "2026-08-28", "home": "monkey", "away": "lions" },
+                { "date": "2026-08-28", "home": "dragon", "away": "hawks" },
+                { "date": "2026-08-29", "home": "brothers", "away": "guardians" },
+                { "date": "2026-08-29", "home": "monkey", "away": "lions" },
+                { "date": "2026-08-29", "home": "dragon", "away": "hawks" },
+                { "date": "2026-08-30", "home": "brothers", "away": "guardians" },
+                { "date": "2026-08-30", "home": "monkey", "away": "lions" },
+                { "date": "2026-08-30", "home": "dragon", "away": "hawks" },
+                { "date": "2026-09-01", "home": "guardians", "away": "lions" },
+                { "date": "2026-09-01", "home": "hawks", "away": "brothers" },
+                { "date": "2026-09-02", "home": "guardians", "away": "lions" },
+                { "date": "2026-09-02", "home": "hawks", "away": "brothers" },
+                { "date": "2026-09-02", "home": "monkey", "away": "dragon" },
+                { "date": "2026-09-03", "home": "monkey", "away": "dragon" },
+                { "date": "2026-09-04", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-04", "home": "lions", "away": "hawks" },
+                { "date": "2026-09-04", "home": "brothers", "away": "dragon" },
+                { "date": "2026-09-05", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-05", "home": "lions", "away": "hawks" },
+                { "date": "2026-09-05", "home": "brothers", "away": "dragon" },
+                { "date": "2026-09-06", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-06", "home": "lions", "away": "hawks" },
+                { "date": "2026-09-06", "home": "brothers", "away": "dragon" },
+                { "date": "2026-09-08", "home": "dragon", "away": "guardians" },
+                { "date": "2026-09-08", "home": "monkey", "away": "hawks" },
+                { "date": "2026-09-09", "home": "dragon", "away": "guardians" },
+                { "date": "2026-09-09", "home": "monkey", "away": "hawks" },
+                { "date": "2026-09-09", "home": "brothers", "away": "lions" },
+                { "date": "2026-09-10", "home": "brothers", "away": "lions" },
+                { "date": "2026-09-11", "home": "dragon", "away": "lions" },
+                { "date": "2026-09-11", "home": "monkey", "away": "brothers" },
+                { "date": "2026-09-11", "home": "hawks", "away": "guardians" },
+                { "date": "2026-09-12", "home": "dragon", "away": "lions" },
+                { "date": "2026-09-12", "home": "monkey", "away": "brothers" },
+                { "date": "2026-09-12", "home": "hawks", "away": "guardians" },
+                { "date": "2026-09-13", "home": "dragon", "away": "lions" },
+                { "date": "2026-09-13", "home": "monkey", "away": "brothers" },
+                { "date": "2026-09-13", "home": "hawks", "away": "guardians" },
+                { "date": "2026-09-15", "home": "hawks", "away": "brothers" },
+                { "date": "2026-09-15", "home": "lions", "away": "monkey" },
+                { "date": "2026-09-16", "home": "dragon", "away": "guardians" },
+                { "date": "2026-09-17", "home": "brothers", "away": "lions" },
+                { "date": "2026-09-17", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-17", "home": "dragon", "away": "hawks" },
+                { "date": "2026-09-18", "home": "brothers", "away": "lions" },
+                { "date": "2026-09-18", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-18", "home": "dragon", "away": "hawks" },
+                { "date": "2026-09-19", "home": "brothers", "away": "dragon" },
+                { "date": "2026-09-19", "home": "monkey", "away": "hawks" },
+                { "date": "2026-09-19", "home": "lions", "away": "guardians" },
+                { "date": "2026-09-20", "home": "brothers", "away": "dragon" },
+                { "date": "2026-09-20", "home": "monkey", "away": "hawks" },
+                { "date": "2026-09-20", "home": "lions", "away": "guardians" },
+                { "date": "2026-09-24", "home": "hawks", "away": "guardians" },
+                { "date": "2026-09-24", "home": "monkey", "away": "brothers" },
+                { "date": "2026-09-24", "home": "lions", "away": "dragon" },
+                { "date": "2026-09-25", "home": "hawks", "away": "guardians" },
+                { "date": "2026-09-25", "home": "monkey", "away": "brothers" },
+                { "date": "2026-09-25", "home": "lions", "away": "dragon" },
+                { "date": "2026-09-26", "home": "hawks", "away": "lions" },
+                { "date": "2026-09-26", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-26", "home": "dragon", "away": "brothers" },
+                { "date": "2026-09-27", "home": "hawks", "away": "lions" },
+                { "date": "2026-09-27", "home": "guardians", "away": "monkey" },
+                { "date": "2026-09-27", "home": "dragon", "away": "brothers" },
+                { "date": "2026-09-28", "home": "brothers", "away": "hawks" },
+                { "date": "2026-09-28", "home": "monkey", "away": "lions" },
+                { "date": "2026-09-28", "home": "guardians", "away": "dragon" }
+            ]
+        };
 
-const getDayName = (dayIndex) => {
-  const days = ['一', '二', '三', '四', '五', '六', '日'];
-  return days[dayIndex];
-};
+        const TEAMS = {
+            dragon: {
+                id: 'dragon',
+                full: '味全龍',
+                short: '味全',
+                shortest: '龍',
+                color: '#EE1C25', 
+                emoji: '🐲',
+                textColor: 'white'
+            },
+            lions: {
+                id: 'lions',
+                full: '統一獅',
+                short: '統一',
+                shortest: '獅',
+                color: '#f37021',
+                emoji: '🦁',
+                textColor: 'white'
+            },
+            brothers: {
+                id: 'brothers',
+                full: '中信兄弟象',
+                short: '中信',
+                shortest: '象',
+                color: '#ffcd00',
+                emoji: '🐘',
+                textColor: 'black'
+            },
+            monkey: {
+                id: 'monkey',
+                full: '樂天桃猿',
+                short: '樂天',
+                shortest: '猿',
+                color: '#8B0000', 
+                emoji: '🐒',
+                textColor: 'white'
+            },
+            guardians: {
+                id: 'guardians',
+                full: '富邦悍將',
+                short: '富邦',
+                shortest: '悍',
+                color: '#004a9c',
+                emoji: '🛡️',
+                textColor: 'white'
+            },
+            hawks: {
+                id: 'hawks',
+                full: '台鋼雄鷹',
+                short: '台鋼',
+                shortest: '鷹',
+                color: '#006241',
+                emoji: '🦅',
+                textColor: 'white'
+            }
+        };
 
-const getMonthName = (monthIndex) => {
-  return `${monthIndex + 1}月`;
-};
+        const TEAM_KEYS = Object.keys(TEAMS);
 
-// Check if a date is within a special event range
-const getSpecialEventForDate = (dateStr, events) => {
-    const targetDate = new Date(dateStr);
-    return events.find(event => {
-        const start = new Date(event.start);
-        const end = new Date(event.end);
-        return targetDate >= start && targetDate <= end;
-    });
-};
+        // --- HELPER FUNCTIONS ---
 
-// --- COMPONENTS ---
+        const getDayName = (dayIndex) => {
+            const days = ['一', '二', '三', '四', '五', '六', '日'];
+            return days[dayIndex];
+        };
 
-const App = () => {
-  // State
-  const [selectedTeams, setSelectedTeams] = useState(new Set());
-  const [viewMode, setViewMode] = useState('all'); 
-  const [monthFilter, setMonthFilter] = useState('future');
-  
-  // Persistence
-  useEffect(() => {
-    const saved = localStorage.getItem('cpbl_2026_pref_v4');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSelectedTeams(new Set(parsed.selectedTeams));
-        setViewMode(parsed.viewMode);
-        setMonthFilter(parsed.monthFilter);
-      } catch (e) {
-        console.error("Failed to load preferences", e);
-      }
-    }
-  }, []);
+        const getMonthName = (monthIndex) => {
+            return `${monthIndex + 1}月`;
+        };
 
-  useEffect(() => {
-    localStorage.setItem('cpbl_2026_pref_v4', JSON.stringify({
-      selectedTeams: Array.from(selectedTeams),
-      viewMode,
-      monthFilter
-    }));
-  }, [selectedTeams, viewMode, monthFilter]);
+        // Check if a date is within a special event range
+        const getSpecialEventForDate = (dateStr, events) => {
+            const targetDate = new Date(dateStr);
+            return events.find(event => {
+                const start = new Date(event.start);
+                const end = new Date(event.end);
+                return targetDate >= start && targetDate <= end;
+            });
+        };
 
-  // Derived Data
-  const currentDate = new Date();
-  const todayStr = currentDate.toISOString().split('T')[0];
+        // --- COMPONENTS ---
 
-  // Prepare Calendar Data
-  const matchesByDate = useMemo(() => {
-    const map = {};
-    RAW_DATA.matches.forEach(match => {
-      if (!map[match.date]) map[match.date] = [];
-      map[match.date].push(match);
-    });
-    return map;
-  }, []);
-
-  const filteredMonths = useMemo(() => {
-    const monthsSet = new Set();
-    RAW_DATA.matches.forEach(m => {
-      const d = new Date(m.date);
-      monthsSet.add(`${d.getFullYear()}-${d.getMonth()}`);
-    });
-    
-    // Also consider special events for months (so if there are no matches but an event, we show it)
-    RAW_DATA.specialEvents.forEach(e => {
-        const d = new Date(e.start);
-        monthsSet.add(`${d.getFullYear()}-${d.getMonth()}`);
-         // Handle events spanning months
-        const end = new Date(e.end);
-        if (end.getMonth() !== d.getMonth()) {
-            monthsSet.add(`${end.getFullYear()}-${end.getMonth()}`);
-        }
-    });
-
-    let sortedMonths = Array.from(monthsSet).map(s => {
-      const [y, m] = s.split('-');
-      return { year: parseInt(y), month: parseInt(m) };
-    }).sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
-
-    if (monthFilter === 'future') {
-      const now = new Date();
-      const currentVal = now.getFullYear() * 12 + now.getMonth();
-      sortedMonths = sortedMonths.filter(m => (m.year * 12 + m.month) >= currentVal);
-    } else if (monthFilter === 'half1') {
-      sortedMonths = sortedMonths.filter(m => m.month >= 2 && m.month <= 5);
-    } else if (monthFilter === 'half2') {
-      sortedMonths = sortedMonths.filter(m => m.month >= 6 && m.month <= 10);
-    } else if (monthFilter !== 'all') {
-      const targetMonth = parseInt(monthFilter);
-      sortedMonths = sortedMonths.filter(m => m.month === targetMonth);
-    }
-    
-    return sortedMonths;
-  }, [monthFilter]);
-
-  // Statistics Calculation
-  const stats = useMemo(() => {
-    let monThu = 0;
-    let fri = 0;
-    let weekendHol = 0;
-    let total = 0;
-    let homeGamesCount = 0;
-    let conflictCount = 0;
-
-    const allDates = Object.keys(matchesByDate);
-    
-    if (selectedTeams.size > 1) {
-       allDates.forEach(dateStr => {
-           const daysMatches = matchesByDate[dateStr];
-           let teamsPlayingHomeToday = 0;
-           
-           daysMatches.forEach(m => {
-               if (selectedTeams.has(m.home)) {
-                   teamsPlayingHomeToday++;
-               }
-           });
-
-           if (teamsPlayingHomeToday > 1) {
-               conflictCount++;
-           }
-       });
-    }
-
-    const visibleMatches = RAW_DATA.matches.filter(m => {
-        if (selectedTeams.size > 0) {
-            const isHome = selectedTeams.has(m.home);
-            const isAway = selectedTeams.has(m.away);
+        const App = () => {
+            // State
+            const [selectedTeams, setSelectedTeams] = useState(new Set());
+            const [viewMode, setViewMode] = useState('all'); 
+            const [monthFilter, setMonthFilter] = useState('future');
             
-            if (viewMode === 'home' && !isHome) return false;
-            if (viewMode === 'all' && !isHome && !isAway) return false;
-        }
-        return true;
-    });
+            // Persistence
+            useEffect(() => {
+                const saved = localStorage.getItem('cpbl_2026_pref_v4');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        setSelectedTeams(new Set(parsed.selectedTeams));
+                        setViewMode(parsed.viewMode);
+                        setMonthFilter(parsed.monthFilter);
+                    } catch (e) {
+                        console.error("Failed to load preferences", e);
+                    }
+                }
+            }, []);
 
-    visibleMatches.forEach(m => {
-        const d = new Date(m.date);
-        const day = d.getDay(); 
-        const dateStr = m.date;
-        const isHoliday = RAW_DATA.holidays[dateStr] || day === 0 || day === 6;
+            useEffect(() => {
+                localStorage.setItem('cpbl_2026_pref_v4', JSON.stringify({
+                    selectedTeams: Array.from(selectedTeams),
+                    viewMode,
+                    monthFilter
+                }));
+            }, [selectedTeams, viewMode, monthFilter]);
 
-        if (isHoliday) {
-            weekendHol++;
-        } else if (day === 5) {
-            fri++;
-        } else {
-            monThu++;
-        }
-        total++;
+            // Derived Data
+            const currentDate = new Date();
+            const todayStr = currentDate.toISOString().split('T')[0];
 
-        if (selectedTeams.size > 0) {
-            if (selectedTeams.has(m.home)) homeGamesCount++;
-        } else {
-             homeGamesCount = total;
-        }
-    });
+            // Prepare Calendar Data
+            const matchesByDate = useMemo(() => {
+                const map = {};
+                RAW_DATA.matches.forEach(match => {
+                    if (!map[match.date]) map[match.date] = [];
+                    map[match.date].push(match);
+                });
+                return map;
+            }, []);
 
-    return { monThu, fri, weekendHol, total, homeGamesCount, conflictCount };
-  }, [selectedTeams, viewMode, matchesByDate]);
+            const filteredMonths = useMemo(() => {
+                const monthsSet = new Set();
+                RAW_DATA.matches.forEach(m => {
+                    const d = new Date(m.date);
+                    monthsSet.add(`${d.getFullYear()}-${d.getMonth()}`);
+                });
+                
+                // Also consider special events
+                RAW_DATA.specialEvents.forEach(e => {
+                    const d = new Date(e.start);
+                    monthsSet.add(`${d.getFullYear()}-${d.getMonth()}`);
+                    const end = new Date(e.end);
+                    if (end.getMonth() !== d.getMonth()) {
+                        monthsSet.add(`${end.getFullYear()}-${end.getMonth()}`);
+                    }
+                });
 
-  const toggleTeam = (teamId) => {
-    const newSelection = new Set(selectedTeams);
-    if (newSelection.has(teamId)) {
-      newSelection.delete(teamId);
-    } else {
-      newSelection.add(teamId);
-    }
-    
-    setSelectedTeams(newSelection);
-    
-    if (newSelection.size > 0) {
-        if (selectedTeams.size === 0) {
-            setViewMode('home');
-        }
-    } else {
-        setViewMode('all');
-    }
-  };
+                let sortedMonths = Array.from(monthsSet).map(s => {
+                    const [y, m] = s.split('-');
+                    return { year: parseInt(y), month: parseInt(m) };
+                }).sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month));
 
-  const clearSelection = () => {
-      setSelectedTeams(new Set());
-      setViewMode('all');
-  }
+                if (monthFilter === 'future') {
+                    const now = new Date();
+                    const currentVal = now.getFullYear() * 12 + now.getMonth();
+                    sortedMonths = sortedMonths.filter(m => (m.year * 12 + m.month) >= currentVal);
+                } else if (monthFilter === 'half1') {
+                    sortedMonths = sortedMonths.filter(m => m.month >= 2 && m.month <= 5);
+                } else if (monthFilter === 'half2') {
+                    sortedMonths = sortedMonths.filter(m => m.month >= 6 && m.month <= 10);
+                } else if (monthFilter !== 'all') {
+                    const targetMonth = parseInt(monthFilter);
+                    sortedMonths = sortedMonths.filter(m => m.month === targetMonth);
+                }
+                
+                return sortedMonths;
+            }, [monthFilter]);
 
-  return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-12">
-      
-      {/* HEADER */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
-            
-          {/* Title & Date Row - Grid Layout for Alignment */}
-          <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-2">
-            <div className="hidden md:block"></div> {/* Spacer for center alignment */}
-            
-            <div className="text-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight flex items-center justify-center gap-2">
-                 ⚾ 2026 CPBL 賽程表
-              </h1>
-            </div>
+            // Statistics Calculation
+            const stats = useMemo(() => {
+                let monThu = 0;
+                let fri = 0;
+                let weekendHol = 0;
+                let total = 0;
+                let homeGamesCount = 0;
+                let conflictCount = 0;
 
-            <div className="text-center md:text-right">
-              <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium">
-                 📅 今日: {todayStr}
-              </span>
-            </div>
-          </div>
-            
-          {/* Stats Dashboard - Centered */}
-          <div className="flex justify-center">
-            <div className="flex flex-wrap justify-center gap-2 text-xs md:text-sm bg-gray-100 p-2 rounded-lg inline-flex">
-                <div className="px-3 py-1 bg-white rounded shadow-sm border border-gray-200">
-                    <span className="text-gray-500 block">週一~四</span>
-                    <span className="font-bold text-lg">{stats.monThu}</span>
-                </div>
-                <div className="px-3 py-1 bg-white rounded shadow-sm border border-gray-200">
-                    <span className="text-gray-500 block">週五</span>
-                    <span className="font-bold text-lg">{stats.fri}</span>
-                </div>
-                <div className="px-3 py-1 bg-red-50 rounded shadow-sm border border-red-100">
-                    <span className="text-red-500 block">假日</span>
-                    <span className="font-bold text-lg text-red-600">{stats.weekendHol}</span>
-                </div>
-                 <div className="px-3 py-1 bg-blue-50 rounded shadow-sm border border-blue-100">
-                    <span className="text-blue-500 block">總場次</span>
-                    <span className="font-bold text-lg text-blue-600">{stats.total}</span>
-                </div>
-                <div className="px-3 py-1 bg-green-50 rounded shadow-sm border border-green-100" title="選定隊伍的主場場次">
-                    <span className="text-green-600 block">{selectedTeams.size > 0 ? '主場場次' : '總計'}</span>
-                    <span className="font-bold text-lg text-green-700">{stats.homeGamesCount}</span>
-                </div>
-                {selectedTeams.size > 1 && (
-                    <div className="px-3 py-1 bg-yellow-50 rounded shadow-sm border border-yellow-200" title="多隊同時主場的天數">
-                        <span className="text-yellow-700 block flex items-center gap-1">
-                            <AlertTriangle size={12} />
-                            主場衝突
-                        </span>
-                        <span className="font-bold text-lg text-yellow-800">{stats.conflictCount} <span className="text-xs font-normal">天</span></span>
-                    </div>
-                )}
-            </div>
-          </div>
+                const allDates = Object.keys(matchesByDate);
+                
+                if (selectedTeams.size > 1) {
+                    allDates.forEach(dateStr => {
+                        const daysMatches = matchesByDate[dateStr];
+                        let teamsPlayingHomeToday = 0;
+                        
+                        daysMatches.forEach(m => {
+                            if (selectedTeams.has(m.home)) {
+                                teamsPlayingHomeToday++;
+                            }
+                        });
 
-          {/* Controls Container */}
-          <div className="space-y-4">
-            {/* Team Selectors - Centered */}
-            <div className="flex flex-wrap justify-center gap-2">
-              <button 
-                onClick={clearSelection}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedTeams.size === 0 
-                  ? 'bg-gray-800 text-white shadow-lg scale-105' 
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                全部球隊
-              </button>
-              {TEAM_KEYS.map(key => {
-                const team = TEAMS[key];
-                const isSelected = selectedTeams.has(key);
-                return (
-                  <button
-                    key={key}
-                    onClick={() => toggleTeam(key)}
-                    style={{
-                      backgroundColor: isSelected ? team.color : 'white',
-                      color: isSelected ? (team.textColor || 'white') : team.color,
-                      borderColor: team.color
-                    }}
-                    className={`px-4 py-2 rounded-full text-sm font-bold border transition-all flex items-center gap-1 ${
-                        isSelected ? 'shadow-md scale-105 ring-2 ring-offset-1 ring-gray-300' : 'hover:opacity-80'
-                    }`}
-                  >
-                    <span>{team.emoji}</span>
-                    <span className="hidden md:inline">{team.full}</span>
-                    <span className="inline md:hidden">{team.shortest}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Filters Row - Centered Content */}
-            <div className="flex flex-col md:flex-row gap-3 justify-center items-center bg-gray-50 p-2 rounded-lg border border-gray-200 max-w-4xl mx-auto">
-               <div className="flex items-center gap-2 w-full md:w-auto justify-center">
-                    {/* View Toggle */}
-                    <div className="flex bg-white rounded-lg p-1 border border-gray-300 shadow-sm w-full md:w-auto">
-                        <button
-                            onClick={() => setViewMode('home')}
-                            disabled={selectedTeams.size === 0}
-                            className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                viewMode === 'home' 
-                                ? 'bg-indigo-100 text-indigo-700' 
-                                : 'text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                            }`}
-                        >
-                            僅顯示主場
-                        </button>
-                        <button
-                            onClick={() => setViewMode('all')}
-                            className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                viewMode === 'all' 
-                                ? 'bg-indigo-100 text-indigo-700' 
-                                : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            主客場皆示
-                        </button>
-                    </div>
-               </div>
-
-                {/* Month Selector */}
-               <div className="flex items-center gap-2 w-full md:w-auto justify-center">
-                   <select 
-                     value={monthFilter}
-                     onChange={(e) => setMonthFilter(e.target.value)}
-                     className="w-full md:w-48 pl-3 pr-10 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm"
-                   >
-                     <option value="future">📅 未來月份 (預設)</option>
-                     <option value="all">📂 所有月份</option>
-                     <option disabled>──────────</option>
-                     <option value="half1">⚾ 上半季 (3-6月)</option>
-                     <option value="half2">⚾ 下半季 (7-10月)</option>
-                     <option disabled>──────────</option>
-                     {[2,3,4,5,6,7,8,9,10,11].map(m => (
-                         <option key={m} value={m}>{m + 1}月</option>
-                     ))}
-                   </select>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Disclaimer */}
-        <div className="bg-yellow-50 border-b border-yellow-100 px-4 py-2 text-xs text-yellow-800 flex items-start gap-2 justify-center">
-            <Info className="w-4 h-4 mt-0.5 shrink-0" />
-            <p>
-                依照CPBL(2025/12/4)公告編輯製作，最終賽程仍以CPBL為準，場地仍未公告，目前顯示大巨蛋以及外地主場安排不包含。
-            </p>
-        </div>
-      </header>
-
-      {/* MAIN CALENDAR CONTENT */}
-      <main className="max-w-7xl mx-auto px-2 md:px-4 py-6 space-y-8">
-        {filteredMonths.length === 0 && (
-             <div className="text-center py-20 text-gray-400">
-                 <Calendar className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                 <p>沒有符合條件的賽程</p>
-             </div>
-        )}
-
-        {filteredMonths.map((mObj, idx) => (
-            <MonthBlock 
-                key={`${mObj.year}-${mObj.month}`} 
-                year={mObj.year} 
-                month={mObj.month} 
-                matchesMap={matchesByDate}
-                selectedTeams={selectedTeams}
-                viewMode={viewMode}
-                holidays={RAW_DATA.holidays}
-                specialEvents={RAW_DATA.specialEvents}
-            />
-        ))}
-      </main>
-
-    </div>
-  );
-};
-
-// --- SUB COMPONENTS ---
-
-const MonthBlock = ({ year, month, matchesMap, selectedTeams, viewMode, holidays, specialEvents }) => {
-    // Generate calendar grid
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDayObj = new Date(year, month, 1);
-    let startDayOfWeek = firstDayObj.getDay(); // 0 (Sun) to 6 (Sat)
-    
-    // Convert to Monday-start (Mon=0, ..., Sun=6)
-    let shift = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-
-    const gridCells = [];
-    for(let i=0; i<shift; i++) gridCells.push(null);
-    for(let i=1; i<=daysInMonth; i++) gridCells.push(i);
-
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden break-inside-avoid mb-8">
-            <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
-                <h2 className="text-xl font-bold">{year}年 {getMonthName(month)}</h2>
-            </div>
-            
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 border-b border-gray-200 text-center text-xs md:text-sm font-medium text-gray-500 bg-gray-50">
-                <div className="py-2">週一</div>
-                <div className="py-2">週二</div>
-                <div className="py-2">週三</div>
-                <div className="py-2">週四</div>
-                <div className="py-2">週五</div>
-                <div className="py-2 text-red-500">週六</div>
-                <div className="py-2 text-red-500">週日</div>
-            </div>
-
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 auto-rows-fr bg-gray-200 gap-px border-b border-gray-200">
-                {gridCells.map((day, idx) => {
-                    if (!day) return <div key={`empty-${idx}`} className="bg-white min-h-[100px] md:min-h-[140px]"></div>;
-
-                    const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const dayMatches = matchesMap[dateStr] || [];
-                    
-                    // Filter Matches for this day
-                    const visibleMatches = dayMatches.filter(m => {
-                        if (selectedTeams.size === 0) return true;
-                        if (viewMode === 'home') return selectedTeams.has(m.home);
-                        return selectedTeams.has(m.home) || selectedTeams.has(m.away);
+                        if (teamsPlayingHomeToday > 1) {
+                            conflictCount++;
+                        }
                     });
-                    
-                    // Special Event Logic
-                    const specialEvent = getSpecialEventForDate(dateStr, specialEvents);
+                }
 
-                    // Holiday Logic
-                    const currentDayDate = new Date(year, month, day);
-                    const dayOfWeek = currentDayDate.getDay(); // 0=Sun, 6=Sat
-                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                    const holidayName = holidays[dateStr];
-                    const isHoliday = isWeekend || !!holidayName;
+                const visibleMatches = RAW_DATA.matches.filter(m => {
+                    if (selectedTeams.size > 0) {
+                        const isHome = selectedTeams.has(m.home);
+                        const isAway = selectedTeams.has(m.away);
+                        
+                        if (viewMode === 'home' && !isHome) return false;
+                        if (viewMode === 'all' && !isHome && !isAway) return false;
+                    }
+                    return true;
+                });
 
-                    return (
-                        <div 
-                            key={dateStr} 
-                            className={`min-h-[100px] md:min-h-[140px] flex flex-col relative transition-colors
-                                ${isHoliday ? 'bg-red-50' : 'bg-white'}
-                                hover:bg-gray-100
-                            `}
-                        >
-                            {/* Date Header */}
-                            <div className={`p-2 flex justify-between items-start text-sm
-                                ${isHoliday ? 'text-red-600' : 'text-gray-700'}
-                            `}>
-                                <span className={`font-bold text-lg leading-none`}>{day}</span>
-                                {holidayName && (
-                                    <span className="text-[10px] md:text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded ml-1 text-right leading-tight">
-                                        {holidayName}
+                visibleMatches.forEach(m => {
+                    const d = new Date(m.date);
+                    const day = d.getDay(); 
+                    const dateStr = m.date;
+                    const isHoliday = RAW_DATA.holidays[dateStr] || day === 0 || day === 6;
+
+                    if (isHoliday) {
+                        weekendHol++;
+                    } else if (day === 5) {
+                        fri++;
+                    } else {
+                        monThu++;
+                    }
+                    total++;
+
+                    if (selectedTeams.size > 0) {
+                        if (selectedTeams.has(m.home)) homeGamesCount++;
+                    } else {
+                        homeGamesCount = total;
+                    }
+                });
+
+                return { monThu, fri, weekendHol, total, homeGamesCount, conflictCount };
+            }, [selectedTeams, viewMode, matchesByDate]);
+
+            const toggleTeam = (teamId) => {
+                const newSelection = new Set(selectedTeams);
+                if (newSelection.has(teamId)) {
+                    newSelection.delete(teamId);
+                } else {
+                    newSelection.add(teamId);
+                }
+                
+                setSelectedTeams(newSelection);
+                
+                if (newSelection.size > 0) {
+                    if (selectedTeams.size === 0) {
+                        setViewMode('home');
+                    }
+                } else {
+                    setViewMode('all');
+                }
+            };
+
+            const clearSelection = () => {
+                setSelectedTeams(new Set());
+                setViewMode('all');
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-12">
+                    {/* HEADER */}
+                    <header className="bg-white shadow-sm sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+                            {/* Title & Date Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-2">
+                                <div className="hidden md:block"></div> 
+                                <div className="text-center">
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight flex items-center justify-center gap-2">
+                                        ⚾ 2026 CPBL 賽程表
+                                    </h1>
+                                </div>
+                                <div className="text-center md:text-right">
+                                    <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 font-medium">
+                                        📅 今日: {todayStr}
                                     </span>
-                                )}
+                                </div>
+                            </div>
+                            
+                            {/* Stats Dashboard */}
+                            <div className="flex justify-center">
+                                <div className="flex flex-wrap justify-center gap-2 text-xs md:text-sm bg-gray-100 p-2 rounded-lg inline-flex">
+                                    <div className="px-3 py-1 bg-white rounded shadow-sm border border-gray-200">
+                                        <span className="text-gray-500 block">週一~四</span>
+                                        <span className="font-bold text-lg">{stats.monThu}</span>
+                                    </div>
+                                    <div className="px-3 py-1 bg-white rounded shadow-sm border border-gray-200">
+                                        <span className="text-gray-500 block">週五</span>
+                                        <span className="font-bold text-lg">{stats.fri}</span>
+                                    </div>
+                                    <div className="px-3 py-1 bg-red-50 rounded shadow-sm border border-red-100">
+                                        <span className="text-red-500 block">假日</span>
+                                        <span className="font-bold text-lg text-red-600">{stats.weekendHol}</span>
+                                    </div>
+                                    <div className="px-3 py-1 bg-blue-50 rounded shadow-sm border border-blue-100">
+                                        <span className="text-blue-500 block">總場次</span>
+                                        <span className="font-bold text-lg text-blue-600">{stats.total}</span>
+                                    </div>
+                                    <div className="px-3 py-1 bg-green-50 rounded shadow-sm border border-green-100" title="選定隊伍的主場場次">
+                                        <span className="text-green-600 block">{selectedTeams.size > 0 ? '主場場次' : '總計'}</span>
+                                        <span className="font-bold text-lg text-green-700">{stats.homeGamesCount}</span>
+                                    </div>
+                                    {selectedTeams.size > 1 && (
+                                        <div className="px-3 py-1 bg-yellow-50 rounded shadow-sm border border-yellow-200" title="多隊同時主場的天數">
+                                            <span className="text-yellow-700 block flex items-center gap-1">
+                                                <IconAlertTriangle size={12} />
+                                                主場衝突
+                                            </span>
+                                            <span className="font-bold text-lg text-yellow-800">{stats.conflictCount} <span className="text-xs font-normal">天</span></span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Matches Container */}
-                            <div className="flex-1 px-1 pb-2 flex flex-col gap-1.5 overflow-y-auto">
-                                {/* Special Event Card */}
-                                {specialEvent && (
-                                    <EventCard event={specialEvent} />
-                                )}
+                            {/* Controls */}
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    <button 
+                                        onClick={clearSelection}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                        selectedTeams.size === 0 
+                                        ? 'bg-gray-800 text-white shadow-lg scale-105' 
+                                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        全部球隊
+                                    </button>
+                                    {TEAM_KEYS.map(key => {
+                                        const team = TEAMS[key];
+                                        const isSelected = selectedTeams.has(key);
+                                        return (
+                                        <button
+                                            key={key}
+                                            onClick={() => toggleTeam(key)}
+                                            style={{
+                                                backgroundColor: isSelected ? team.color : 'white',
+                                                color: isSelected ? (team.textColor || 'white') : team.color,
+                                                borderColor: team.color
+                                            }}
+                                            className={`px-4 py-2 rounded-full text-sm font-bold border transition-all flex items-center gap-1 ${
+                                                isSelected ? 'shadow-md scale-105 ring-2 ring-offset-1 ring-gray-300' : 'hover:opacity-80'
+                                            }`}
+                                        >
+                                            <span>{team.emoji}</span>
+                                            <span className="hidden md:inline">{team.full}</span>
+                                            <span className="inline md:hidden">{team.shortest}</span>
+                                        </button>
+                                        );
+                                    })}
+                                </div>
 
-                                {/* Regular Matches */}
-                                {visibleMatches.map((match, mIdx) => (
-                                    <MatchCard key={mIdx} match={match} />
-                                ))}
+                                <div className="flex flex-col md:flex-row gap-3 justify-center items-center bg-gray-50 p-2 rounded-lg border border-gray-200 max-w-4xl mx-auto">
+                                    <div className="flex items-center gap-2 w-full md:w-auto justify-center">
+                                        <div className="flex bg-white rounded-lg p-1 border border-gray-300 shadow-sm w-full md:w-auto">
+                                            <button
+                                                onClick={() => setViewMode('home')}
+                                                disabled={selectedTeams.size === 0}
+                                                className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                                    viewMode === 'home' 
+                                                    ? 'bg-indigo-100 text-indigo-700' 
+                                                    : 'text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                                }`}
+                                            >
+                                                僅顯示主場
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('all')}
+                                                className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                                    viewMode === 'all' 
+                                                    ? 'bg-indigo-100 text-indigo-700' 
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                            >
+                                                主客場皆示
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 w-full md:w-auto justify-center">
+                                        <select 
+                                            value={monthFilter}
+                                            onChange={(e) => setMonthFilter(e.target.value)}
+                                            className="w-full md:w-48 pl-3 pr-10 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm"
+                                        >
+                                            <option value="future">📅 未來月份 (預設)</option>
+                                            <option value="all">📂 所有月份</option>
+                                            <option disabled>──────────</option>
+                                            <option value="half1">⚾ 上半季 (3-6月)</option>
+                                            <option value="half2">⚾ 下半季 (7-10月)</option>
+                                            <option disabled>──────────</option>
+                                            {[2,3,4,5,6,7,8,9,10,11].map(m => (
+                                                <option key={m} value={m}>{m + 1}月</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
 
-const EventCard = ({ event }) => {
-    const isDark = event.type === 'dark';
-    
-    return (
-        <div className={`
-            relative group rounded shadow-sm overflow-hidden p-2 text-center text-xs md:text-sm font-bold flex items-center justify-center min-h-[40px] border
-            ${isDark 
-                ? 'bg-gray-700 text-gray-100 border-gray-800' 
-                : 'bg-gray-200 text-gray-700 border-gray-300'
-            }
-        `}>
-            {event.name}
-        </div>
-    );
-};
+                        {/* Disclaimer */}
+                        <div className="bg-yellow-50 border-b border-yellow-100 px-4 py-2 text-xs text-yellow-800 flex items-start gap-2 justify-center">
+                            <IconInfo className="w-4 h-4 mt-0.5 shrink-0" />
+                            <p>
+                                依照CPBL(2025/12/4)公告編輯製作，最終賽程仍以CPBL為準，場地仍未公告，目前顯示大巨蛋以及外地主場安排不包含。
+                            </p>
+                        </div>
+                    </header>
 
-const MatchCard = ({ match }) => {
-    const homeTeam = TEAMS[match.home];
-    const awayTeam = TEAMS[match.away];
+                    {/* MAIN CALENDAR CONTENT */}
+                    <main className="max-w-7xl mx-auto px-2 md:px-4 py-6 space-y-8">
+                        {filteredMonths.length === 0 && (
+                            <div className="text-center py-20 text-gray-400">
+                                <IconCalendar className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                                <p>沒有符合條件的賽程</p>
+                            </div>
+                        )}
 
-    if (!homeTeam || !awayTeam) return null;
+                        {filteredMonths.map((mObj) => (
+                            <MonthBlock 
+                                key={`${mObj.year}-${mObj.month}`} 
+                                year={mObj.year} 
+                                month={mObj.month} 
+                                matchesMap={matchesByDate}
+                                selectedTeams={selectedTeams}
+                                viewMode={viewMode}
+                                holidays={RAW_DATA.holidays}
+                                specialEvents={RAW_DATA.specialEvents}
+                            />
+                        ))}
+                    </main>
+                </div>
+            );
+        };
 
-    return (
-        <div className="relative group border border-gray-200 rounded shadow-sm overflow-hidden bg-white">
-            <div className="text-center flex flex-col justify-center items-stretch h-full">
-                
-                {/* Desktop Layout */}
-                <div className="hidden lg:flex flex-row items-center justify-between text-sm leading-tight w-full">
-                    {/* Away Team - Faded */}
-                    <div className="flex-1 py-1.5 bg-gray-50 text-gray-500 font-medium text-xs">
-                        {awayTeam.full}
+        const MonthBlock = ({ year, month, matchesMap, selectedTeams, viewMode, holidays, specialEvents }) => {
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayObj = new Date(year, month, 1);
+            let startDayOfWeek = firstDayObj.getDay(); 
+            let shift = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+            const gridCells = [];
+            for(let i=0; i<shift; i++) gridCells.push(null);
+            for(let i=1; i<=daysInMonth; i++) gridCells.push(i);
+
+            return (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden break-inside-avoid mb-8">
+                    <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
+                        <h2 className="text-xl font-bold">{year}年 {getMonthName(month)}</h2>
                     </div>
                     
-                    {/* VS */}
-                    <div className="bg-gray-100 text-gray-400 text-[10px] px-1 py-1.5 border-x border-gray-100">
-                        VS
+                    <div className="grid grid-cols-7 border-b border-gray-200 text-center text-xs md:text-sm font-medium text-gray-500 bg-gray-50">
+                        <div className="py-2">週一</div>
+                        <div className="py-2">週二</div>
+                        <div className="py-2">週三</div>
+                        <div className="py-2">週四</div>
+                        <div className="py-2">週五</div>
+                        <div className="py-2 text-red-500">週六</div>
+                        <div className="py-2 text-red-500">週日</div>
                     </div>
 
-                    {/* Home Team - Bold Background */}
-                    <div 
-                        className="flex-1 py-1.5 font-bold flex items-center justify-center gap-1"
-                        style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
-                    >
-                        <span>{homeTeam.full}</span>
-                        <span>{homeTeam.emoji}</span>
+                    <div className="grid grid-cols-7 auto-rows-fr bg-gray-200 gap-px border-b border-gray-200">
+                        {gridCells.map((day, idx) => {
+                            if (!day) return <div key={`empty-${idx}`} className="bg-white min-h-[100px] md:min-h-[140px]"></div>;
+
+                            const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            const dayMatches = matchesMap[dateStr] || [];
+                            
+                            const visibleMatches = dayMatches.filter(m => {
+                                if (selectedTeams.size === 0) return true;
+                                if (viewMode === 'home') return selectedTeams.has(m.home);
+                                return selectedTeams.has(m.home) || selectedTeams.has(m.away);
+                            });
+                            
+                            const specialEvent = getSpecialEventForDate(dateStr, specialEvents);
+
+                            const currentDayDate = new Date(year, month, day);
+                            const dayOfWeek = currentDayDate.getDay(); 
+                            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                            const holidayName = holidays[dateStr];
+                            const isHoliday = isWeekend || !!holidayName;
+
+                            return (
+                                <div 
+                                    key={dateStr} 
+                                    className={`min-h-[100px] md:min-h-[140px] flex flex-col relative transition-colors
+                                        ${isHoliday ? 'bg-red-50' : 'bg-white'}
+                                        hover:bg-gray-100
+                                    `}
+                                >
+                                    <div className={`p-2 flex justify-between items-start text-sm
+                                        ${isHoliday ? 'text-red-600' : 'text-gray-700'}
+                                    `}>
+                                        <span className={`font-bold text-lg leading-none`}>{day}</span>
+                                        {holidayName && (
+                                            <span className="text-[10px] md:text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded ml-1 text-right leading-tight">
+                                                {holidayName}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1 px-1 pb-2 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">
+                                        {specialEvent && (
+                                            <EventCard event={specialEvent} />
+                                        )}
+                                        {visibleMatches.map((match, mIdx) => (
+                                            <MatchCard key={mIdx} match={match} />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
+            );
+        };
 
-                {/* Tablet Layout */}
-                <div className="hidden md:flex lg:hidden flex-row items-center justify-between text-xs leading-tight w-full">
-                    <div className="flex-1 py-1 bg-gray-50 text-gray-500 font-medium text-[10px]">
-                        {awayTeam.short}
-                    </div>
-                    <div className="bg-gray-100 text-gray-400 text-[10px] px-0.5 py-1">V</div>
-                    <div 
-                        className="flex-1 py-1 font-bold flex items-center justify-center gap-0.5"
-                        style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
-                    >
-                         {homeTeam.short} {homeTeam.emoji}
+        const EventCard = ({ event }) => {
+            const isDark = event.type === 'dark';
+            
+            return (
+                <div className={`
+                    relative group rounded shadow-sm overflow-hidden p-2 text-center text-xs md:text-sm font-bold flex items-center justify-center min-h-[40px] border
+                    ${isDark 
+                        ? 'bg-gray-700 text-gray-100 border-gray-800' 
+                        : 'bg-gray-200 text-gray-700 border-gray-300'
+                    }
+                `}>
+                    {event.name}
+                </div>
+            );
+        };
+
+        const MatchCard = ({ match }) => {
+            const homeTeam = TEAMS[match.home];
+            const awayTeam = TEAMS[match.away];
+
+            if (!homeTeam || !awayTeam) return null;
+
+            return (
+                <div className="relative group border border-gray-200 rounded shadow-sm overflow-hidden bg-white">
+                    <div className="text-center flex flex-col justify-center items-stretch h-full">
+                        
+                        {/* Desktop Layout */}
+                        <div className="hidden lg:flex flex-row items-center justify-between text-sm leading-tight w-full">
+                            <div className="flex-1 py-1.5 bg-gray-50 text-gray-500 font-medium text-xs">
+                                {awayTeam.full}
+                            </div>
+                            <div className="bg-gray-100 text-gray-400 text-[10px] px-1 py-1.5 border-x border-gray-100">
+                                VS
+                            </div>
+                            <div 
+                                className="flex-1 py-1.5 font-bold flex items-center justify-center gap-1"
+                                style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
+                            >
+                                <span>{homeTeam.full}</span>
+                                <span>{homeTeam.emoji}</span>
+                            </div>
+                        </div>
+
+                        {/* Tablet Layout */}
+                        <div className="hidden md:flex lg:hidden flex-row items-center justify-between text-xs leading-tight w-full">
+                            <div className="flex-1 py-1 bg-gray-50 text-gray-500 font-medium text-[10px]">
+                                {awayTeam.short}
+                            </div>
+                            <div className="bg-gray-100 text-gray-400 text-[10px] px-0.5 py-1">V</div>
+                            <div 
+                                className="flex-1 py-1 font-bold flex items-center justify-center gap-0.5"
+                                style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
+                            >
+                                {homeTeam.short} {homeTeam.emoji}
+                            </div>
+                        </div>
+
+                        {/* Mobile Layout */}
+                        <div className="flex md:hidden flex-row items-center justify-between text-xs w-full">
+                            <div className="flex-1 py-1 bg-gray-50 text-gray-500 text-[10px] text-center">
+                                {awayTeam.shortest}
+                            </div>
+                            <div className="bg-gray-100 text-gray-400 text-[10px] px-0.5 py-1">v</div>
+                            <div 
+                                className="flex-1 py-1 font-bold text-center"
+                                style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
+                            >
+                                {homeTeam.shortest}
+                            </div>
+                        </div>
                     </div>
                 </div>
+            );
+        };
 
-                 {/* Mobile Layout */}
-                 <div className="flex md:hidden flex-row items-center justify-between text-xs w-full">
-                     <div className="flex-1 py-1 bg-gray-50 text-gray-500 text-[10px] text-center">
-                        {awayTeam.shortest}
-                     </div>
-                     <div className="bg-gray-100 text-gray-400 text-[10px] px-0.5 py-1">v</div>
-                     <div 
-                        className="flex-1 py-1 font-bold text-center"
-                        style={{ backgroundColor: homeTeam.color, color: homeTeam.textColor }}
-                     >
-                        {homeTeam.shortest}
-                     </div>
-                 </div>
-                 
-            </div>
-        </div>
-    );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
