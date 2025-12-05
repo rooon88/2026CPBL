@@ -17,6 +17,23 @@
         /* Hide scrollbar for clean UI in cards */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Custom Background Logo Style */
+        .month-card-bg {
+            background-image: var(--bg-logo-url);
+            background-repeat: no-repeat;
+            background-position: right bottom;
+            /* Height matches the min-height of the day cell */
+            background-size: auto 100px; 
+            /* Multiplier to make it slightly transparent if needed, currently fully opaque as requested "complete display" */
+        }
+        
+        @media (min-width: 768px) {
+            .month-card-bg {
+                /* Desktop day cell min-height is 140px */
+                background-size: auto 140px; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -25,16 +42,50 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- ICONS (Inline SVGs replacement for lucide-react) ---
+        // --- ICONS ---
         const IconInfo = ({ className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         );
-        const IconCalendar = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        const IconCalendar = ({ className, size }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
         );
         const IconAlertTriangle = ({ className, size }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
         );
+        const IconHourglass = ({ className, size }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+        );
+
+        // --- SVG LOGO DATA URI GENERATOR ---
+        // Generates a base64 SVG background image matching the uploaded user image
+        const getLogoBackground = () => {
+            // Recreating "STOCKFEEL 股感媒體 龍焰燒烤席" layout
+            const svgString = `
+                <svg width="400" height="280" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .title { font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif; font-weight: 900; fill: #d1d5db; }
+                        .subtitle { font-family: sans-serif; font-weight: 700; fill: #9ca3af; letter-spacing: 2px; }
+                        .icon { fill: #9ca3af; }
+                    </style>
+                    
+                    <!-- Group: Top Logo (Icon + STOCKFEEL) -->
+                    <g transform="translate(60, 40)">
+                         <!-- Book/S Icon representation -->
+                        <path class="icon" d="M10,0 L20,5 L20,25 L10,20 Z" opacity="0.8"/>
+                        <path class="icon" d="M0,5 L10,10 L10,30 L0,25 Z" opacity="0.6"/>
+                        <text x="35" y="22" class="subtitle" font-size="24" text-anchor="start">STOCKFEEL</text>
+                    </g>
+
+                    <!-- Line 2: 股感媒體 -->
+                    <text x="200" y="140" class="title" font-size="70" text-anchor="middle" style="letter-spacing: 5px;">股感媒體</text>
+                    
+                    <!-- Line 3: 龍焰燒烤席 -->
+                    <text x="200" y="240" class="title" font-size="80" text-anchor="middle" style="letter-spacing: 2px;">龍焰燒烤席</text>
+                </svg>
+            `;
+            const encoded = encodeURIComponent(svgString);
+            return `url("data:image/svg+xml;utf8,${encoded}")`;
+        };
 
         // --- DATA ---
         const RAW_DATA = {
@@ -53,6 +104,10 @@
                 "2026-12-25": "行憲紀念日", "2026-12-26": "連假", "2026-12-27": "連假"
             },
             "specialEvents": [
+                { start: "2026-03-05", end: "2026-03-11", name: "WBC預賽", type: "dark" },
+                { start: "2026-03-13", end: "2026-03-14", name: "WBC複賽", type: "dark" },
+                { start: "2026-03-15", end: "2026-03-16", name: "WBC準決賽", type: "dark" },
+                { start: "2026-03-17", end: "2026-03-17", name: "WBC總冠軍賽", type: "dark" },
                 { start: "2026-06-23", end: "2026-06-28", name: "補賽預備日", type: "light" },
                 { start: "2026-06-29", end: "2026-06-30", name: "上半季補賽周", type: "light" },
                 { start: "2026-07-01", end: "2026-07-01", name: "上半季加賽保留日", type: "light" },
@@ -515,7 +570,8 @@
             const [selectedTeams, setSelectedTeams] = useState(new Set());
             const [viewMode, setViewMode] = useState('all'); 
             const [monthFilter, setMonthFilter] = useState('future');
-            
+            const [logoUrl, setLogoUrl] = useState('');
+
             // Persistence
             useEffect(() => {
                 const saved = localStorage.getItem('cpbl_2026_pref_v4');
@@ -529,6 +585,8 @@
                         console.error("Failed to load preferences", e);
                     }
                 }
+                // Generate Logo URL once
+                setLogoUrl(getLogoBackground());
             }, []);
 
             useEffect(() => {
@@ -655,6 +713,28 @@
                 return { monThu, fri, weekendHol, total, homeGamesCount, conflictCount };
             }, [selectedTeams, viewMode, matchesByDate]);
 
+            // Countdown Logic
+            const countdown = useMemo(() => {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                const openingDay = new Date(2026, 2, 28); // March 28, 2026
+                const allStar = new Date(2026, 6, 18);    // July 18, 2026
+                const playoffs = new Date(2026, 9, 9);    // Oct 9, 2026 (Playoff Challenge)
+
+                if (today < openingDay) {
+                    const diff = Math.ceil((openingDay - today) / (1000 * 60 * 60 * 24));
+                    return { label: "開幕戰", days: diff };
+                } else if (today < allStar) {
+                    const diff = Math.ceil((allStar - today) / (1000 * 60 * 60 * 24));
+                    return { label: "明星賽", days: diff };
+                } else if (today < playoffs) {
+                    const diff = Math.ceil((playoffs - today) / (1000 * 60 * 60 * 24));
+                    return { label: "季後挑戰賽", days: diff };
+                }
+                return null;
+            }, []);
+
             const toggleTeam = (teamId) => {
                 const newSelection = new Set(selectedTeams);
                 if (newSelection.has(teamId)) {
@@ -731,6 +811,15 @@
                                             <span className="font-bold text-lg text-yellow-800">{stats.conflictCount} <span className="text-xs font-normal">天</span></span>
                                         </div>
                                     )}
+                                    {countdown && (
+                                        <div className="px-3 py-1 bg-purple-50 rounded shadow-sm border border-purple-100" title={`距離${countdown.label}`}>
+                                            <span className="text-purple-600 block flex items-center gap-1">
+                                                <IconHourglass size={12} />
+                                                距{countdown.label}
+                                            </span>
+                                            <span className="font-bold text-lg text-purple-700">{countdown.days} <span className="text-xs font-normal">天</span></span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -793,7 +882,7 @@
                                                     : 'text-gray-500 hover:text-gray-700'
                                                 }`}
                                             >
-                                                主客場皆示
+                                                主客場皆顯示
                                             </button>
                                         </div>
                                     </div>
@@ -847,6 +936,7 @@
                                 viewMode={viewMode}
                                 holidays={RAW_DATA.holidays}
                                 specialEvents={RAW_DATA.specialEvents}
+                                logoUrl={logoUrl}
                             />
                         ))}
                     </main>
@@ -854,7 +944,7 @@
             );
         };
 
-        const MonthBlock = ({ year, month, matchesMap, selectedTeams, viewMode, holidays, specialEvents }) => {
+        const MonthBlock = ({ year, month, matchesMap, selectedTeams, viewMode, holidays, specialEvents, logoUrl }) => {
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDayObj = new Date(year, month, 1);
             let startDayOfWeek = firstDayObj.getDay(); 
@@ -865,12 +955,15 @@
             for(let i=1; i<=daysInMonth; i++) gridCells.push(i);
 
             return (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden break-inside-avoid mb-8">
-                    <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between">
+                <div 
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden break-inside-avoid mb-8 relative month-card-bg"
+                    style={{ '--bg-logo-url': logoUrl }}
+                >
+                    <div className="bg-gray-800 text-white px-4 py-3 flex items-center justify-between relative z-10">
                         <h2 className="text-xl font-bold">{year}年 {getMonthName(month)}</h2>
                     </div>
                     
-                    <div className="grid grid-cols-7 border-b border-gray-200 text-center text-xs md:text-sm font-medium text-gray-500 bg-gray-50">
+                    <div className="grid grid-cols-7 border-b border-gray-200 text-center text-xs md:text-sm font-medium text-gray-500 bg-gray-50 relative z-10 bg-opacity-90">
                         <div className="py-2">週一</div>
                         <div className="py-2">週二</div>
                         <div className="py-2">週三</div>
@@ -880,9 +973,9 @@
                         <div className="py-2 text-red-500">週日</div>
                     </div>
 
-                    <div className="grid grid-cols-7 auto-rows-fr bg-gray-200 gap-px border-b border-gray-200">
+                    <div className="grid grid-cols-7 auto-rows-fr bg-gray-200/50 gap-px border-b border-gray-200 relative z-10">
                         {gridCells.map((day, idx) => {
-                            if (!day) return <div key={`empty-${idx}`} className="bg-white min-h-[100px] md:min-h-[140px]"></div>;
+                            if (!day) return <div key={`empty-${idx}`} className="bg-white/85 min-h-[100px] md:min-h-[140px]"></div>;
 
                             const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                             const dayMatches = matchesMap[dateStr] || [];
@@ -905,8 +998,8 @@
                                 <div 
                                     key={dateStr} 
                                     className={`min-h-[100px] md:min-h-[140px] flex flex-col relative transition-colors
-                                        ${isHoliday ? 'bg-red-50' : 'bg-white'}
-                                        hover:bg-gray-100
+                                        ${isHoliday ? 'bg-red-50/85' : 'bg-white/85'}
+                                        hover:bg-gray-100/90
                                     `}
                                 >
                                     <div className={`p-1 md:p-2 flex justify-between items-start text-sm
