@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "league": "CPBL",
+    "season": 2026,
+    "type": "一軍熱身賽",
+    "total_games": 30,
+    "source": "CPBL 官方網站 (cpbl.com.tw/schedule)",
+    "created": "2026-02-26"
+  },
+  "games": [
+    {"game_number": 1, "date": "2026-03-09", "day_of_week": "一", "date_display": "3/9(一)", "away_team": "統一7-ELEVEn獅", "home_team": "台鋼雄鷹", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 2, "date": "2026-03-10", "day_of_week": "二", "date_display": "3/10(二)", "away_team": "富邦悍將", "home_team": "中信兄弟", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 3, "date": "2026-03-12", "day_of_week": "四", "date_display": "3/12(四)", "away_team": "樂天桃猿", "home_team": "中信兄弟", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 4, "date": "2026-03-12", "day_of_week": "四", "date_display": "3/12(四)", "away_team": "統一7-ELEVEn獅", "home_team": "味全龍", "venue": "斗六", "time": "18:35"},
+    {"game_number": 5, "date": "2026-03-13", "day_of_week": "五", "date_display": "3/13(五)", "away_team": "富邦悍將", "home_team": "台鋼雄鷹", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 6, "date": "2026-03-14", "day_of_week": "六", "date_display": "3/14(六)", "away_team": "樂天桃猿", "home_team": "味全龍", "venue": "斗六", "time": "12:05"},
+    {"game_number": 7, "date": "2026-03-14", "day_of_week": "六", "date_display": "3/14(六)", "away_team": "統一7-ELEVEn獅", "home_team": "中信兄弟", "venue": "亞太副", "time": "13:05"},
+    {"game_number": 8, "date": "2026-03-14", "day_of_week": "六", "date_display": "3/14(六)", "away_team": "台鋼雄鷹", "home_team": "富邦悍將", "venue": "斗六", "time": "18:35"},
+    {"game_number": 9, "date": "2026-03-15", "day_of_week": "日", "date_display": "3/15(日)", "away_team": "中信兄弟", "home_team": "味全龍", "venue": "斗六", "time": "12:05"},
+    {"game_number": 10, "date": "2026-03-15", "day_of_week": "日", "date_display": "3/15(日)", "away_team": "統一7-ELEVEn獅", "home_team": "富邦悍將", "venue": "亞太副", "time": "13:05"},
+    {"game_number": 11, "date": "2026-03-15", "day_of_week": "日", "date_display": "3/15(日)", "away_team": "台鋼雄鷹", "home_team": "樂天桃猿", "venue": "斗六", "time": "18:35"},
+    {"game_number": 12, "date": "2026-03-17", "day_of_week": "二", "date_display": "3/17(二)", "away_team": "樂天桃猿", "home_team": "富邦悍將", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 13, "date": "2026-03-17", "day_of_week": "二", "date_display": "3/17(二)", "away_team": "台鋼雄鷹", "home_team": "味全龍", "venue": "斗六", "time": "18:35"},
+    {"game_number": 14, "date": "2026-03-18", "day_of_week": "三", "date_display": "3/18(三)", "away_team": "中信兄弟", "home_team": "樂天桃猿", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 15, "date": "2026-03-18", "day_of_week": "三", "date_display": "3/18(三)", "away_team": "味全龍", "home_team": "統一7-ELEVEn獅", "venue": "斗六", "time": "18:35"},
+    {"game_number": 16, "date": "2026-03-20", "day_of_week": "五", "date_display": "3/20(五)", "away_team": "富邦悍將", "home_team": "味全龍", "venue": "斗六", "time": "18:35"},
+    {"game_number": 17, "date": "2026-03-20", "day_of_week": "五", "date_display": "3/20(五)", "away_team": "樂天桃猿", "home_team": "統一7-ELEVEn獅", "venue": "亞太主", "time": "18:35"},
+    {"game_number": 18, "date": "2026-03-20", "day_of_week": "五", "date_display": "3/20(五)", "away_team": "中信兄弟", "home_team": "台鋼雄鷹", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 19, "date": "2026-03-21", "day_of_week": "六", "date_display": "3/21(六)", "away_team": "中信兄弟", "home_team": "統一7-ELEVEn獅", "venue": "亞太主", "time": "13:05"},
+    {"game_number": 20, "date": "2026-03-21", "day_of_week": "六", "date_display": "3/21(六)", "away_team": "味全龍", "home_team": "台鋼雄鷹", "venue": "斗六", "time": "17:05"},
+    {"game_number": 21, "date": "2026-03-21", "day_of_week": "六", "date_display": "3/21(六)", "away_team": "富邦悍將", "home_team": "樂天桃猿", "venue": "澄清湖", "time": "17:05"},
+    {"game_number": 22, "date": "2026-03-22", "day_of_week": "日", "date_display": "3/22(日)", "away_team": "富邦悍將", "home_team": "統一7-ELEVEn獅", "venue": "亞太主", "time": "13:05"},
+    {"game_number": 23, "date": "2026-03-22", "day_of_week": "日", "date_display": "3/22(日)", "away_team": "味全龍", "home_team": "中信兄弟", "venue": "斗六", "time": "17:05"},
+    {"game_number": 24, "date": "2026-03-22", "day_of_week": "日", "date_display": "3/22(日)", "away_team": "樂天桃猿", "home_team": "台鋼雄鷹", "venue": "澄清湖", "time": "17:05"},
+    {"game_number": 25, "date": "2026-03-23", "day_of_week": "一", "date_display": "3/23(一)", "away_team": "味全龍", "home_team": "樂天桃猿", "venue": "斗六", "time": "18:35"},
+    {"game_number": 26, "date": "2026-03-24", "day_of_week": "二", "date_display": "3/24(二)", "away_team": "味全龍", "home_team": "富邦悍將", "venue": "斗六", "time": "18:35"},
+    {"game_number": 27, "date": "2026-03-24", "day_of_week": "二", "date_display": "3/24(二)", "away_team": "統一7-ELEVEn獅", "home_team": "樂天桃猿", "venue": "嘉義市", "time": "18:35"},
+    {"game_number": 28, "date": "2026-03-24", "day_of_week": "二", "date_display": "3/24(二)", "away_team": "台鋼雄鷹", "home_team": "中信兄弟", "venue": "澄清湖", "time": "18:35"},
+    {"game_number": 29, "date": "2026-03-25", "day_of_week": "三", "date_display": "3/25(三)", "away_team": "中信兄弟", "home_team": "富邦悍將", "venue": "嘉義市", "time": "18:35"},
+    {"game_number": 30, "date": "2026-03-25", "day_of_week": "三", "date_display": "3/25(三)", "away_team": "台鋼雄鷹", "home_team": "統一7-ELEVEn獅", "venue": "澄清湖", "time": "18:35"}
+  ]
+}
